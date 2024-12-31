@@ -1,0 +1,5 @@
+Yang sudah 100% install
+
+select2
+sweetalert
+datatables

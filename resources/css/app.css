@@ -1,0 +1,68 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "datatables.net-bs4/css/dataTables.bootstrap4.min.css";
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+    cursor: default;
+    margin-left: 5px;
+    padding-right: 5px;
+    background-color: #3AAFA9;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #3AAFA9;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    box-sizing: border-box;
+    display: inline-block;
+    margin-left: 5px;
+    margin-top: 5px;
+    padding: 0;
+    padding-left: 0px;
+    padding-left: 20px;
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: red;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+    cursor: default;
+    margin-left: 5px;
+    padding-right: 5px;
+    background-color: #3aafa9;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #3aafa9;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    box-sizing: border-box;
+    display: inline-block;
+    margin-left: 5px;
+    margin-top: 5px;
+    padding: 0;
+    padding-left: 0px;
+    padding-left: 20px;
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+    white-space: nowrap;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: red;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+}

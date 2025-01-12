@@ -61,9 +61,9 @@ export default {
 
     data() {
         return {
-            isLoading: false, // untuk menampilkan loading state
-            loginFailed: false, // state untuk login gagal
-            validation: {}, // state validasi input
+            isLoading: false,
+            loginFailed: false,
+            validation: {},
             user: {
                 email: '',
                 password: ''
@@ -74,27 +74,20 @@ export default {
     methods: {
         async login() {
             this.isLoading = true;
-            this.validation = {}; // Reset validation errors
+            this.validation = {};
             this.loginFailed = false;
-
-            // Validasi input sebelum request
             if (!this.user.email) {
                 this.validation.email = true;
             }
             if (!this.user.password) {
                 this.validation.password = true;
             }
-
             if (Object.keys(this.validation).length > 0) {
                 this.isLoading = false;
                 return;
             }
-
             try {
-                // Step 1: Ambil CSRF Cookie
                 await axios.get(window.url + 'sanctum/csrf-cookie');
-
-                // Step 2: Kirim data login dengan CSRF header
                 const response = await axios.post(
                     window.url + 'api/login',
                     {
@@ -106,17 +99,14 @@ export default {
                             'X-XSRF-TOKEN': document.cookie
                                 .split('; ')
                                 .find(row => row.startsWith('XSRF-TOKEN='))
-                                ?.split('=')[1] // Ambil nilai cookie XSRF-TOKEN
+                                ?.split('=')[1]
                         }
                     }
                 );
 
                 if (response.data.success) {
-                    // Set localStorage
                     localStorage.setItem('loggedIn', 'true');
                     localStorage.setItem('token', response.data.token);
-
-                    // Redirect ke dashboard
                     this.$router.push({ name: 'dashboard' });
                 } else {
                     this.loginFailed = true;
@@ -136,7 +126,6 @@ export default {
 
 
     mounted() {
-        // Jika sudah login, redirect ke dashboard
         if (localStorage.getItem('loggedIn')) {
             this.$router.push({ name: 'dashboard' });
         }

@@ -12,12 +12,9 @@ class ExportController extends Controller
 {
     public function exportPosyandu(Request $request, $id)
     {
-        $tahun = $request->query('tahun'); // Ambil filter tahun dari query string
-        // dd($tahun);
-        // dd($id, $tahun, new PosyanduExport($id, $tahun));
+        $tahun = $request->query('tahun');
 
 
-        // Ekspor data ke Excel
         return Excel::download(new PosyanduExport($id, $tahun), 'SIP' . $tahun . '.xlsx');
     }
 }

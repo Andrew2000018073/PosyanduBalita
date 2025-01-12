@@ -19,31 +19,22 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function __construct($idPosyandu)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
     }
 
 
 
-    /**
-     * Fungsi map bisa dikosongkan karena data akan diproses di registerEvents.
-     */
     public function map($posyandu): array
     {
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
     public function registerEvents(): array
     {
         return [
@@ -51,13 +42,11 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet = $event->sheet;
                 $posyandu = Posyandu::with(['wus.pus.bayi'])->find($this->idPosyandu);
 
-                // Judul Utama
                 $sheet->mergeCells('A1:H1');
                 $sheet->setCellValue('A1', 'CATATAN IBU HAMIL, KELAHIRAN, KEMATIAN BAYI, DAN KEMATIAN IBU HAMIL MELAHIRKAN / NIFAS');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu);
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -67,7 +56,6 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A9');
                 $sheet->setCellValue('A8', 'NO');
                 $sheet->mergeCells('B8:C8');
@@ -84,12 +72,10 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('G9', 'BAYI');
                 $sheet->setCellValue('H9', 'Keterangan');
 
-                // Style Heading
                 $sheet->getStyle('A8:H9')->getFont()->setBold(true);
                 $sheet->getStyle('A8:H9')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A8:H9')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                // Data Tabel
                 $row = 10;
                 foreach ($posyandu->wus as $index => $wus) {
                     $pus = $wus->pus;
@@ -101,9 +87,9 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                         $sheet->setCellValue("C{$row}", $pus->nama_suami ?? '-');
                         $sheet->setCellValue("D{$row}", $bayi->namabalita ?? '-');
                         $sheet->setCellValue("E{$row}", $bayi->tanggal_lahir ?? '-');
-                        $sheet->setCellValue("F{$row}", ''); // Tanggal meninggal ibu (kosong)
-                        $sheet->setCellValue("G{$row}", ''); // Tanggal meninggal bayi (kosong)
-                        $sheet->setCellValue("H{$row}", $wus->statuswus); // Tanggal meninggal bayi (kosong)
+                        $sheet->setCellValue("F{$row}", '');
+                        $sheet->setCellValue("G{$row}", '');
+                        $sheet->setCellValue("H{$row}", $wus->statuswus);
                         $row++;
                     }
 
@@ -120,7 +106,6 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                     }
                 }
 
-                // Border untuk data
                 $sheet->getStyle("A10:H" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(30);
@@ -135,6 +120,6 @@ class CatatanBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function title(): string
     {
-        return 'Form 1'; // Nama worksheet untuk Sheet 1
+        return 'Form 1';
     }
 }

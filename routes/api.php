@@ -42,54 +42,54 @@ Route::middleware('auth:sanctum')->get('/user/roles', function (Request $request
 });
 
 
-Route::post('/login', [LoginController::class, 'index']);
-Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']);
-Route::post('/register', [RegisterController::class, 'register']);
-Route::get('/roles', [RegisterController::class, 'getRoles']);
+Route::post('/login', [LoginController::class, 'index']); //Untuk login
+Route::middleware('auth:sanctum')->post('/logout', [LoginController::class, 'logout']); //Untuk logout
+Route::post('/register', [RegisterController::class, 'register']); //Untuk register pengguna
+Route::get('/roles', [RegisterController::class, 'getRoles']); // API untuk mengambil daftar roles
 Route::get('/getusers', [UserController::class, 'getAllUsersWithRoles']);
 Route::post('/users', [UserController::class, 'store']); // API untuk menambahkan pengguna
 Route::get('/roles', [UserController::class, 'getRoles']); // API untuk mengambil daftar roles
-Route::put('updatePeserta/{id}', [UserController::class, 'updatePeserta']);
-Route::post('deleteUser/{id}', [UserController::class, 'deleteUser']);
+Route::put('updatePeserta/{id}', [UserController::class, 'updatePeserta']); // API untuk mengupdate data pengguna
+Route::post('deleteUser/{id}', [UserController::class, 'deleteUser']); // API untuk menghapus pengguna
 
 
 // Posyandu
-Route::post('storePosyandu', [TambahPosyanduController::class, 'storePosyandu']);
-Route::get('getPosyandu', [TambahPosyanduController::class, 'getPosyandu']);
-Route::get('detail-posyandu/{id}', [TambahPosyanduController::class, 'getDetail']);
-Route::post('updatePosyandu/{id}', [TambahPosyanduController::class, 'updatePosyandu']);
-Route::post('deletePosyandu/{id}', [TambahPosyanduController::class, 'deletePosyandu']);
+Route::post('storePosyandu', [TambahPosyanduController::class, 'storePosyandu']); //Api simpan posyandu
+Route::get('getPosyandu', [TambahPosyanduController::class, 'getPosyandu']); //Api ambil data posyandu
+Route::get('detail-posyandu/{id}', [TambahPosyanduController::class, 'getDetail']); //Api ambil data posyandu berdasarkan id
+Route::post('updatePosyandu/{id}', [TambahPosyanduController::class, 'updatePosyandu']); //Api update data posyandu
+Route::post('deletePosyandu/{id}', [TambahPosyanduController::class, 'deletePosyandu']); //Api delete data posyandu
 
 //Kegiatan
-Route::get('getKegiatan/{id}', [KegiatanPosyanduController::class, 'getKegiatan']);
-Route::get('getKegiatanActive/{id}', [KegiatanPosyanduController::class, 'getKegiatanActive']);
-Route::post('storeKegiatan', [KegiatanPosyanduController::class, 'storeKegiatan']);
-Route::post('updateKegiatan/{id}', [KegiatanPosyanduController::class, 'updateKegiatan']);
-Route::post('deleteKegiatan/{id}', [KegiatanPosyanduController::class, 'deleteKegiatan']);
-Route::get('getStatus/{id}', [KegiatanPosyanduController::class, 'getStatus']);
+Route::get('getKegiatan/{id}', [KegiatanPosyanduController::class, 'getKegiatan']); //Api ambil data kegiatan berdasarkan id posyandu
+Route::get('getKegiatanActive/{id}', [KegiatanPosyanduController::class, 'getKegiatanActive']); //Api akses kegiatan
+Route::post('storeKegiatan', [KegiatanPosyanduController::class, 'storeKegiatan']); //Api simpan kegiatan
+Route::post('updateKegiatan/{id}', [KegiatanPosyanduController::class, 'updateKegiatan']); //Api update kegiatan
+Route::post('deleteKegiatan/{id}', [KegiatanPosyanduController::class, 'deleteKegiatan']); //Api delete kegiatan
+Route::get('getStatus/{id}', [KegiatanPosyanduController::class, 'getStatus']); //Api ambil status kegiatan
 
 // WUS
-Route::post('storeWusMenyusui', [WusController::class, 'storeWusA']);
-Route::post('StoreWusHamil', [WusController::class, 'storeWusHamil']);
-Route::get('getWus', [WusController::class, 'getWus']);
-Route::get('getWusPeserta/{id}', [WusController::class, 'getWusPeserta']);
-Route::get('getOrtu', [WusController::class, 'getOrtu']);
-Route::post('storeWus', [WusController::class, 'storeWus']);
-Route::post('deleteWus/{id}', [WusController::class, 'deleteWus']);
-Route::post('updateWus/{id}', [WusController::class, 'updateWus']);
-Route::post('updateWusPeserta/{id}', [WusController::class, 'updateWusPeserta']);
-Route::get('getWusStatus', [WusController::class, 'getWusStatus']);
-Route::get('getJumlahWus', [WusController::class, 'getJumlahWus']);
-Route::get('getJumlahWusPosyandu/{id}', [WusController::class, 'getJumlahWusPosyandu']);
+Route::post('storeWusMenyusui', [WusController::class, 'storeWusA']); //Api simpan wus menyusui
+Route::post('StoreWusHamil', [WusController::class, 'storeWusHamil']); //Api simpan wus hamil
+Route::get('getWus', [WusController::class, 'getWus']); //Api ambil data wus
+Route::get('getWusPeserta/{id}', [WusController::class, 'getWusPeserta']); //Api ambil data wus berdasarkan id
+Route::get('getOrtu', [WusController::class, 'getOrtu']); //Api ambil data ortu
+Route::post('storeWus', [WusController::class, 'storeWus']); //Api simpan wus
+Route::post('deleteWus/{id}', [WusController::class, 'deleteWus']); //Api delete wus
+Route::post('updateWus/{id}', [WusController::class, 'updateWus']); //Api update wus
+Route::post('updateWusPeserta/{id}', [WusController::class, 'updateWusPeserta']); //Api update wus yang jadi peserta
+Route::get('getWusStatus', [WusController::class, 'getWusStatus']); //Api ambil status wus dalam bentuk nomor
+Route::get('getJumlahWus', [WusController::class, 'getJumlahWus']); //Api ambil jumlah wus
+Route::get('getJumlahWusPosyandu/{id}', [WusController::class, 'getJumlahWusPosyandu']); //Api ambil jumlah wus berdasarkan id posyandu
 
 
 // Kegiatan WUS
-Route::post('storePesertaWus', [PeriksawusController::class, 'storePesertaWus']);
-Route::get('datawus/{id}', [PeriksawusController::class, 'getPesertaWus']);
-Route::get('getPesertaWus/{id}', [PeriksawusController::class, 'getPesertaActiveWus']);
-Route::get('getNamaWus/{id}', [PeriksawusController::class, 'getNamaPeserta']);
-Route::post('deletePesertaWus/{id}', [PeriksawusController::class, 'deletePesertaWus']);
-Route::post('updatePesertaWus/{id}', [PeriksawusController::class, 'updatePesertaWus']);
+Route::post('storePesertaWus', [PeriksawusController::class, 'storePesertaWus']); //Api simpan peserta wus
+Route::get('datawus/{id}', [PeriksawusController::class, 'getPesertaWus']); //Api ambil data peserta wus dari kegiatan yang telah selesai
+Route::get('getPesertaWus/{id}', [PeriksawusController::class, 'getPesertaActiveWus']); //Api ambil data peserta wus yang aktif
+Route::get('getNamaWus/{id}', [PeriksawusController::class, 'getNamaPeserta']); //Api ambil nama peserta wus
+Route::post('deletePesertaWus/{id}', [PeriksawusController::class, 'deletePesertaWus']); //Api delete peserta wus
+Route::post('updatePesertaWus/{id}', [PeriksawusController::class, 'updatePesertaWus']); //Api update peserta wus
 
 // PUS
 Route::get('getPus', [PUSController::class, 'getPus']);

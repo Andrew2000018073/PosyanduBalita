@@ -20,14 +20,10 @@ class PUSController extends Controller
     public function getPus()
     {
         $data = PUS::with('Wus')->get();
-        // $cars = Car::with('brand:name,id')->get();
-
-        // Return as JSON
         return response()->json($data);
     }
     public function storePus(Request $request)
     {
-        // Add validation to ensure data integrity
         PUS::create([
             'wus_id' => $request->wus_id,
             'lingkar_perut_suami' => $request->lingkar_perut_suami,
@@ -38,7 +34,6 @@ class PUSController extends Controller
     }
     public function updatePus(Request $request)
     {
-        // Add validation to ensure data integrity
         $updated = PUS::where('id', $request->id)->update([
             'lingkar_perut_suami' => $request->lingkar_perut_suami,
             'jumlah_anak_hidup' => $request->jumlah_anak_hidup,
@@ -49,7 +44,6 @@ class PUSController extends Controller
 
     public function getDetail($id)
     {
-        // Use the $id directly from the route
         $puses = PUS::with('Wus')->where('id', $id)->first();
         if ($puses) {
             return response()->json($puses);
@@ -66,10 +60,7 @@ class PUSController extends Controller
 
     public function storepemakaiankontrasepsi(Request $request)
     {
-        // Ambil instance PUS berdasarkan pus_id
         $pus = Pus::find($request->pus_id);
-
-        // Tambahkan data ke pivot table
         $pus->alatKontrasepsis()->attach($request->kontrasepsi_id, [
             'status' => 'Sedang dipakai',
             'tanggal_pertama_pakai' => now()->format('d-m-Y'),
@@ -80,10 +71,7 @@ class PUSController extends Controller
 
     public function getPusid($wus_id)
     {
-        // Retrieve only the `id` values of PUS records where `wus_id` matches the provided ID
         $pusIds = PUS::where('wus_id', $wus_id)->pluck('id');
-
-        // Return the array of IDs as a JSON response
         return response()->json($pusIds);
     }
 }

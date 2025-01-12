@@ -212,7 +212,7 @@ export default {
     },
     mounted() {
         this.getBayis();
-        this.getPosyandu(); // Fetch tasks when component is mounted
+        this.getPosyandu();
     },
     beforeDestroy() {
         if ($("#posyandu").data("select2")) {
@@ -222,7 +222,6 @@ export default {
 
     methods: {
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -233,8 +232,8 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.posyandus = response.data; // Simpan data ke properti tasks
-                    this.initializeSelect2(); // Initialize select2 after data is loaded
+                    this.posyandus = response.data;
+                    this.initializeSelect2();
                 })
                 .catch((errors) => {
                     console.log(errors); // Tangani kesalahan jika ada
@@ -242,15 +241,11 @@ export default {
         },
         initializeSelect2() {
             const vm = this;
-
-            // Destroy instance jika Select2 sudah diinisialisasi sebelumnya
             if ($.fn.select2) {
                 if ($("#posyandu").data("select2")) {
                     $("#posyandu").select2("destroy");
                 }
             }
-
-            // Inisialisasi ulang posyandu
             $("#posyandu")
                 .select2({
                     dropdownAutoWidth: true,
@@ -258,42 +253,30 @@ export default {
                     allowClear: true,
                 })
                 .on("change", function () {
-                    vm.taskData.posyandus_id = $(this).val(); // Update model Vue saat Select2 berubah
+                    vm.taskData.posyandus_id = $(this).val();
                 });
         },
-
         closeModal() {
             $("#taskModal").modal("hide");
         },
         getAge(dateString) {
-            // Split the date string by '-'
             const [day, month, year] = dateString.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
             const today = new Date();
-
-            // Calculate the difference in years and months
             const yearsDiff = today.getFullYear() - birthDate.getFullYear();
             const monthsDiff = today.getMonth() - birthDate.getMonth();
-
-            // Calculate the total age in months
             let ageInMonths = yearsDiff * 12 + monthsDiff;
-
-            // Adjust if the current day of the month is earlier than the birth date's day
             if (today.getDate() < birthDate.getDate()) {
                 ageInMonths--;
             }
-
             return ageInMonths;
         },
-
         getBayis() {
             axios
                 .get(window.url + "api/getBayi")
                 .then((response) => {
-                    this.balitas = response.data; // Set data
-                    this.reinitializeDataTable(this.balitas); // Pass the fetched data
+                    this.balitas = response.data;
+                    this.reinitializeDataTable(this.balitas);
                     this.getPosyandu();
                 })
                 .catch((errors) => {
@@ -303,23 +286,16 @@ export default {
 
         reinitializeDataTable(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablebayis");
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataTableColumns(),
             });
-
-            // Attach event listeners
             this.attachEventListeners();
         },
         getDataTableColumns() {
@@ -418,8 +394,6 @@ export default {
         editTask(task) {
             this.editMode = true;
             this.deleteMode = false;
-
-            // Konversi tanggal dari string ke Date object
             this.taskData = {
                 ...task,
                 tanggal_lahir: parse(task.tanggal_lahir, 'dd-MM-yyyy', new Date())
@@ -427,7 +401,7 @@ export default {
             this.$nextTick(() => {
                 $("#taskModal").modal("show");
                 $("#taskModal").on("shown.bs.modal", () => {
-                    this.initializeSelect2(); // Pastikan dipanggil setelah modal ditampilkan
+                    this.initializeSelect2();
                 });
             });
         },
@@ -450,7 +424,7 @@ export default {
 
             this.taskData.tanggal_lahir = this.formatDate(
                 this.taskData.tanggal_lahir
-            ); // Date will be in selected format
+            );
 
             if (
                 this.taskData.tanggal_lahir &&
@@ -498,20 +472,14 @@ export default {
 <style scoped>
 @media (max-width: 768px) {
 
-
-
-
     table td,
     table th {
         padding: 4px 6px;
-        /* Atur padding sel agar lebih kecil */
         font-size: 12px;
-        /* Perkecil ukuran font */
     }
 
     .table-header {
         background-color: #28a745;
-        /* Hijau sesuai tema */
         color: white;
         padding: 6px 10px;
         text-align: center;

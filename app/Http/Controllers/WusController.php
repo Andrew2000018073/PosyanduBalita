@@ -14,37 +14,22 @@ class WusController extends Controller
     public function getOrtu()
     {
         $data = Wus::with('PUS:nama_suami')->get();
-        // $cars = Car::with('brand:name,id')->get();
-
-        // Return as JSON
         return response()->json($data);
     }
     public function getWus()
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data along with posyandu
         $wusWithLatestLila = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
-        }, 'posyandu'])->get(); // Include posyandu relationship
-
-        // Step 2: Initialize an array to hold the latest Lila data
+        }, 'posyandu'])->get();
         $latestLilaData = [];
-
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestLila as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
-
-            // Check for lila_periksa data
             $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : null;
-
-            // If lila_periksa is null, backtrack to find the latest non-null entry
             if (is_null($lilaTerbaru)) {
                 $lilaTerbaru = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
-
-            // Prepare the response data with Wus and Posyandu details
             $latestLilaData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -53,40 +38,31 @@ class WusController extends Controller
                 'tanggal_lahir' => $wus->tanggal_lahir,
                 'statuswus' => $wus->statuswus,
                 'posyandus_id' => $wus->posyandus_id,
-                'posyandu_nama' => optional($wus->posyandu)->nama_posyandu, // Safely access posyandu name
+                'posyandu_nama' => optional($wus->posyandu)->nama_posyandu,
             ];
         }
-
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLilaData);
     }
 
     public function getWusPosyandu($id)
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data along with posyandu
         $wusWithLatestLila = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
-        }, 'posyandu'])->where('posyandus_id', $id)->get(); // Include posyandu relationship
+        }, 'posyandu'])->where('posyandus_id', $id)->get();
 
-        // Step 2: Initialize an array to hold the latest Lila data
         $latestLilaData = [];
 
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestLila as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
 
-            // Check for lila_periksa data
             $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : null;
 
-            // If lila_periksa is null, backtrack to find the latest non-null entry
             if (is_null($lilaTerbaru)) {
                 $lilaTerbaru = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
 
-            // Prepare the response data with Wus and Posyandu details
             $latestLilaData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -94,11 +70,10 @@ class WusController extends Controller
                 'tanggal_lahir' => $wus->tanggal_lahir,
                 'statuswus' => $wus->statuswus,
                 'posyandu_id' => $wus->posyandus_id,
-                'posyandu_nama' => optional($wus->posyandu)->nama_posyandu, // Safely access posyandu name
+                'posyandu_nama' => optional($wus->posyandu)->nama_posyandu,
             ];
         }
 
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLilaData);
     }
 
@@ -138,44 +113,35 @@ class WusController extends Controller
     }
     public function storeWus(Request $request)
     {
-        // Add validation to ensure data integrity
         Wus::create([
             'nama' => $request->nama,
             'lila_wus' => $request->lila_wus,
             'tanggal_lahir' => $request->tanggal_lahir,
-            // 'kehamilan_id'=> $request->kehamilan_id,
             'posyandus_id' => $request->posyandus_id,
             'statuswus' => $request->statuswus,
         ]);
     }
     public function updateWus(Request $request)
     {
-        // Add validation to ensure data integrity
         $updated = Wus::where('id', $request->id)->update([
             'nama' => $request->nama,
             'lila_wus' => $request->lila_wus,
             'tanggal_lahir' => $request->tanggal_lahir,
-            // 'kehamilan_id'=> $request->kehamilan_id,
             'statuswus' => $request->statuswus,
             'posyandus_id' => $request->posyandus_id,
         ]);
-
         return response()->json($updated ? 'Update successful' : 'Update failed');
     }
     public function updateWusPeserta(Request $request)
     {
-        // Add validation to ensure data integrity
         $updated = Wus::where('id', $request->wus_id)->update([
             'statuswus' => $request->statuswus,
             'lila_wus' => $request->lila_periksa,
         ]);
-
         return response()->json($updated ? 'Update successful' : 'Update failed');
     }
     public function storeWusA(Request $request)
     {
-        // Add validation to ensure data integrity
-
         Wus::create([
             'nama' => $request->nama,
             'lila_wus' => $request->lila_wus,
@@ -187,9 +153,6 @@ class WusController extends Controller
 
     public function storeWusHamil(Request $request)
     {
-        // Add validation to ensure data integrity
-
-
         Wus::create([
             'nama' => $request->nama,
             'lila_wus' => $request->lila_wus,
@@ -207,35 +170,27 @@ class WusController extends Controller
 
     public function getGemuk()
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data
         $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
         }])->get();
 
-        // Step 2: Initialize an array to hold the latest Lila data
         $latestLiperData = [];
 
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestlingper as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
 
-            // Initialize the lingkarperut to null in case no data is found
             $lingkarperut = null;
 
-            // Check for lingkarperut_periksa data
             if ($latestPeriksa) {
                 $lingkarperut = $latestPeriksa->lingkarperut_periksa;
             }
 
-            // If lingkarperut_periksa is null, backtrack to find the latest non-null entry
             if (is_null($lingkarperut)) {
                 $lingkarperut = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
 
-            // Prepare the response data
             $latestLiperData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -243,41 +198,32 @@ class WusController extends Controller
             ];
         }
 
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLiperData);
     }
 
     public function getGemukPos($id)
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data
         $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
         }])->where('posyandus_id', $id)->get();
 
-        // Step 2: Initialize an array to hold the latest Lila data
         $latestLilaData = [];
 
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestlingper as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
 
-            // Initialize the lingkarperut to null in case no data is found
             $lingkarperut = null;
 
-            // Check for lingkarperut_periksa data
             if ($latestPeriksa) {
                 $lingkarperut = $latestPeriksa->lingkarperut_periksa;
             }
 
-            // If lingkarperut_periksa is null, backtrack to find the latest non-null entry
             if (is_null($lingkarperut)) {
                 $lingkarperut = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
 
-            // Prepare the response data
             $latestLilaData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -285,37 +231,29 @@ class WusController extends Controller
             ];
         }
 
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLilaData);
     }
 
 
     public function getKek()
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data
         $wusWithLatestLila = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
         }])->where('statuswus', 'Hamil')->get();
 
-        // Step 2: Initialize an array to hold the latest Lila data
         $latestLilaData = [];
 
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestLila as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
 
-            // Check for lila_periksa data
             $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : null;
 
-            // If lila_periksa is null, backtrack to find the latest non-null entry
             if (is_null($lilaTerbaru)) {
                 $lilaTerbaru = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
 
-            // Prepare the response data
             $latestLilaData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -323,32 +261,25 @@ class WusController extends Controller
             ];
         }
 
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLilaData);
     }
     public function getKekPos($id)
     {
-        // Step 1: Retrieve all WUS with their latest completed periksawus data for the given posyandu
         $wusWithLatestLila = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
                 $subQuery->where('status_kegiatan', 'selesai');
             })->latest('created_at')->take(1);
         }])
-            ->where('posyandus_id', $id)->where('statuswus', 'Hamil') // Filter WUS by posyandus_id
+            ->where('posyandus_id', $id)->where('statuswus', 'Hamil')
             ->get();
 
-        // Step 2: Initialize an array to hold the latest Lila data
         $latestLilaData = [];
 
-        // Step 3: Loop through each WUS to gather data
         foreach ($wusWithLatestLila as $wus) {
-            // Get the latest periksawus entry
             $latestPeriksa = $wus->periksawus->first();
 
-            // Check for lila_periksa data
             $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : $this->getLatestLilaFromPreviousActivities($wus->id);
 
-            // Only include WUS with a valid lila_periksa
             if (!is_null($lilaTerbaru)) {
                 $latestLilaData[] = [
                     'wus_id' => $wus->id,
@@ -358,17 +289,14 @@ class WusController extends Controller
             }
         }
 
-        // Step 4: Return the latest Lila data as JSON
         return response()->json($latestLilaData);
     }
 
 
 
 
-    // Helper function to retrieve the latest available lila_periksa from previous activities
     private function getLatestLilaFromPreviousActivities($wusId)
     {
-        // Get the most recent periksawus entry with a completed kegiatan
         $periksaWus = PeriksaWus::where('wus_id', $wusId)
             ->whereHas('Kegiatanposyandu', function ($query) {
                 $query->where('status_kegiatan', 'selesai');
@@ -376,7 +304,6 @@ class WusController extends Controller
             ->latest('created_at')
             ->first();
 
-        // Return the lila_periksa value or null if not found
         return $periksaWus ? $periksaWus->lila_periksa : null;
     }
 
@@ -398,7 +325,6 @@ class WusController extends Controller
             12 => 'Dec'
         ];
 
-        // Prepare the months array
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
@@ -406,7 +332,7 @@ class WusController extends Controller
             $months[$date->format('Y-m')] = [
                 'KEK' => 0,
                 'Normal' => 0,
-                'month' => $monthsNames[$monthIndex] // Store month name
+                'month' => $monthsNames[$monthIndex]
             ];
         }
 
@@ -421,8 +347,6 @@ class WusController extends Controller
             ->orderBy('month', 'asc')
             ->get();
 
-        // Populate the months array with the fetched data
-        // Populate the months array with the fetched data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['KEK'] = $entry->KEK;
@@ -430,10 +354,9 @@ class WusController extends Controller
             }
         }
 
-        // Ensure every month has a label
         foreach ($months as $month => &$values) {
             if (!isset($values['month'])) {
-                $values['month'] = $monthsNames[(int)date('m', strtotime($month))]; // Map back the month name
+                $values['month'] = $monthsNames[(int)date('m', strtotime($month))];
             }
         }
 
@@ -460,7 +383,6 @@ class WusController extends Controller
             12 => 'Dec'
         ];
 
-        // Prepare the months array
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
@@ -468,11 +390,10 @@ class WusController extends Controller
             $months[$date->format('Y-m')] = [
                 'KEK' => 0,
                 'Normal' => 0,
-                'month' => $monthsNames[$monthIndex] // Store month name
+                'month' => $monthsNames[$monthIndex]
             ];
         }
 
-        // Execute the query with proper date conversion
         $data = PeriksaWus::selectRaw('DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
             SUM(CASE WHEN lila_periksa < 23.5 THEN 1 ELSE 0 END) as KEK,
             SUM(CASE WHEN lila_periksa >= 23.5 THEN 1 ELSE 0 END) as Normal')
@@ -485,8 +406,6 @@ class WusController extends Controller
             ->orderBy('month', 'asc')
             ->get();
 
-        // Populate the months array with the fetched data
-        // Populate the months array with the fetched data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['KEK'] = $entry->KEK;
@@ -494,10 +413,9 @@ class WusController extends Controller
             }
         }
 
-        // Ensure every month has a label
         foreach ($months as $month => &$values) {
             if (!isset($values['month'])) {
-                $values['month'] = $monthsNames[(int)date('m', strtotime($month))]; // Map back the month name
+                $values['month'] = $monthsNames[(int)date('m', strtotime($month))];
             }
         }
 
@@ -506,8 +424,7 @@ class WusController extends Controller
 
     public function getDetail($id)
     {
-        // Use the $id directly from the route
-        $posyandu = Wus::where('id', $id)->first(); // Use first() to get a single record
+        $posyandu = Wus::where('id', $id)->first();
         if ($posyandu) {
             return response()->json($posyandu);
         } else {
@@ -520,12 +437,11 @@ class WusController extends Controller
         $currentDate = now();
         $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Prepare the months array for the last 12 months with month names
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $monthIndex = (int)$date->format('m') - 1; // Adjust index for $monthsNames array
+            $monthIndex = (int)$date->format('m') - 1;
 
             $months[$monthKey] = [
                 'month' => $monthsNames[$monthIndex],
@@ -539,7 +455,6 @@ class WusController extends Controller
             ];
         }
 
-        // Retrieve and process the data from the database
         $data = PeriksaWus::selectRaw('
             DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
             AVG(lila_periksa) as lila_periksa,
@@ -556,7 +471,6 @@ class WusController extends Controller
             ->orderBy('month', 'asc')
             ->get();
 
-        // Populate the months array with data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['lila_periksa'] = round($entry->lila_periksa, 2);
@@ -564,8 +478,8 @@ class WusController extends Controller
                 $months[$entry->month]['diastol'] = round($entry->diastol, 2);
                 $months[$entry->month]['sistol'] = round($entry->sistol, 2);
                 $months[$entry->month]['tinggi_fundus'] = round($entry->tinggi_fundus, 2);
-                $months[$entry->month]['keluhan'] = $entry->keluhan; // Keluhan tidak perlu pembulatan
-                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa; // Status tidak perlu pembulatan
+                $months[$entry->month]['keluhan'] = $entry->keluhan;
+                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa;
             }
         }
 
@@ -577,12 +491,11 @@ class WusController extends Controller
         $currentDate = now();
         $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Prepare the months array for the last 12 months with month names
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $monthIndex = (int)$date->format('m') - 1; // Adjust index for $monthsNames array
+            $monthIndex = (int)$date->format('m') - 1;
 
             $months[$monthKey] = [
                 'month' => $monthsNames[$monthIndex],
@@ -596,7 +509,6 @@ class WusController extends Controller
             ];
         }
 
-        // Retrieve and process the data from the database
         $data = PeriksaWus::selectRaw('
             DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
             AVG(lila_periksa) as lila_periksa,
@@ -614,7 +526,6 @@ class WusController extends Controller
             ->orderBy('month', 'asc')
             ->get();
 
-        // Populate the months array with data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['lila_periksa'] = round($entry->lila_periksa, 2);
@@ -622,8 +533,8 @@ class WusController extends Controller
                 $months[$entry->month]['diastol'] = round($entry->diastol, 2);
                 $months[$entry->month]['sistol'] = round($entry->sistol, 2);
                 $months[$entry->month]['tinggi_fundus'] = round($entry->tinggi_fundus, 2);
-                $months[$entry->month]['keluhan'] = $entry->keluhan; // Keluhan tidak perlu pembulatan
-                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa; // Status tidak perlu pembulatan
+                $months[$entry->month]['keluhan'] = $entry->keluhan;
+                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa;
             }
         }
 
@@ -635,12 +546,11 @@ class WusController extends Controller
         $currentDate = now();
         $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Prepare the months array for the last 12 months with month names
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $monthIndex = (int)$date->format('m') - 1; // Adjust index for $monthsNames array
+            $monthIndex = (int)$date->format('m') - 1;
 
             $months[$monthKey] = [
                 'month' => $monthsNames[$monthIndex],
@@ -654,7 +564,6 @@ class WusController extends Controller
             ];
         }
 
-        // Retrieve and process the data from the database
         $data = PeriksaWus::selectRaw('
         DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
         AVG(lila_periksa) as lila_periksa,
@@ -673,7 +582,6 @@ class WusController extends Controller
             ->get();
 
 
-        // Populate the months array with data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['lila_periksa'] = round($entry->lila_periksa, 2);
@@ -681,8 +589,8 @@ class WusController extends Controller
                 $months[$entry->month]['diastol'] = round($entry->diastol, 2);
                 $months[$entry->month]['sistol'] = round($entry->sistol, 2);
                 $months[$entry->month]['tinggi_fundus'] = round($entry->tinggi_fundus, 2);
-                $months[$entry->month]['keluhan'] = $entry->keluhan; // Keluhan tidak perlu pembulatan
-                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa; // Status tidak perlu pembulatan
+                $months[$entry->month]['keluhan'] = $entry->keluhan;
+                $months[$entry->month]['statusperiksa'] = $entry->statusperiksa;
             }
         }
 

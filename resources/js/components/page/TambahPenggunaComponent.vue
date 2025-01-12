@@ -94,7 +94,7 @@ export default {
                 email: '',
                 password: '',
                 password_confirmation: '',
-                role: '', // Role yang dipilih
+                role: '',
             },
             userserrors: {
                 name: false,
@@ -103,7 +103,7 @@ export default {
                 password_confirmation: false,
                 role: false,
             },
-            roles: [], // Data roles
+            roles: [],
             error: null,
         };
     },
@@ -118,7 +118,7 @@ export default {
         },
         async fetchRoles() {
             try {
-                const response = await axios.get(window.url + 'api/roles'); // Endpoint roles
+                const response = await axios.get(window.url + 'api/roles');
                 this.roles = response.data.roles;
             } catch (error) {
                 console.error('Gagal mengambil roles:', error);
@@ -137,11 +137,11 @@ export default {
             }
 
             try {
-                const response = await axios.post(window.url + 'api/users', this.user); // Endpoint store user
+                const response = await axios.post(window.url + 'api/users', this.user);
                 console.log('Pengguna berhasil ditambahkan:', response.data);
 
                 this.showAlert();
-                this.$router.push({ name: 'kelola-pengguna' }); // Redirect ke halaman pengelolaan pengguna
+                this.$router.push({ name: 'kelola-pengguna' });
             } catch (error) {
                 console.error('Gagal menambahkan pengguna:', error.response?.data);
                 this.error = error.response?.data?.errors || 'Gagal menambahkan pengguna';
@@ -149,7 +149,7 @@ export default {
         },
     },
     mounted() {
-        this.fetchRoles(); // Ambil daftar role saat komponen dimuat
+        this.fetchRoles();
     },
 };
 </script>

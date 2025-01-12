@@ -202,34 +202,23 @@ export default {
         },
         createNewData() {
             this.$router.push({ name: 'tambah-imunisasi-balita' });
-            // this.editMode = false;
-            // this.deleteMode = false;
-            // this.taskData = { id: '', nama: '', detail: '' }; // Reset task data
-            // this.taskErrors = { nama: false, detail: false }; // Reset errors
-            // $('#taskModal').modal('show');
         },
 
         getImunisasi() {
             axios.get(window.url + 'api/getImunisasiBayi/')
                 .then(response => {
-                    // Hancurkan DataTable jika sudah diinisialisasi
                     if ($.fn.DataTable.isDataTable(this.$refs.imunisasiTable)) {
                         $(this.$refs.imunisasiTable).DataTable().destroy();
                     }
-
-                    // Perbarui data
                     this.imunisasis = response.data;
-
-                    // Gunakan setTimeout untuk memberi waktu bagi DOM untuk diperbarui
                     setTimeout(() => {
-                        // Periksa apakah tabel tersedia di DOM
                         if ($(this.$refs.imunisasiTable).length) {
                             $(this.$refs.imunisasiTable).DataTable({
                                 pageLength: 10,
                                 lengthChange: false,
                             });
                         }
-                    }, 100); // Tunggu 100ms sebelum inisialisasi
+                    }, 100);
                 })
                 .catch(errors => {
                     console.log(errors);
@@ -248,18 +237,14 @@ export default {
 <style scoped>
 @media (max-width: 768px) {
 
-
     table td,
     table th {
         padding: 4px 6px;
-        /* Atur padding sel agar lebih kecil */
         font-size: 12px;
-        /* Perkecil ukuran font */
     }
 
     .table-header {
         background-color: #28a745;
-        /* Hijau sesuai tema */
         color: white;
         padding: 6px 10px;
         text-align: center;

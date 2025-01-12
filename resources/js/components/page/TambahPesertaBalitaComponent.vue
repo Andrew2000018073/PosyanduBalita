@@ -158,14 +158,13 @@ export default {
     data() {
         return {
             imunisasis: [],
-            balitas: [], // Menyimpan data dari API
-            kegiatanId: "", // Declare kegiatanId
+            balitas: [],
+            kegiatanId: "",
             inputData: {
                 bayis_id: "",
                 kegiatanposyandu_balita_id: "",
                 panjang_badan: "",
                 berat_badan: "",
-                // hasil_penimbangan: '',
                 lingkep_periksa: "",
                 catatan: "",
                 imunisasi_id: "",
@@ -177,7 +176,6 @@ export default {
                 kegiatanposyandu_balita_id: false,
                 panjang_badan: false,
                 berat_badan: false,
-                // hasil_penimbangan: false,
                 lingkep_periksa: false,
                 catatan: false,
                 imunisasi_id: false,
@@ -191,15 +189,15 @@ export default {
         this.getImunisasis();
     },
     created() {
-        this.kegiatanId = localStorage.getItem("PassedId"); // Set kegiatanId from localStorage
-        console.log("ID from localStorage:", this.kegiatanId); // Log the ID
+        this.kegiatanId = localStorage.getItem("PassedId");
+        console.log("ID from localStorage:", this.kegiatanId);
     },
     watch: {
         inputData: {
             handler(newData) {
                 console.log("inputData updated:", newData);
             },
-            deep: true, // Ensure Vue watches nested properties
+            deep: true,
         },
     },
     methods: {
@@ -215,10 +213,10 @@ export default {
             axios
                 .get(window.url + "api/getpesertabalita/" + this.kegiatanId)
                 .then((response) => {
-                    this.balitas = response.data; // Save WUS data
+                    this.balitas = response.data;
 
                     this.$nextTick(() => {
-                        this.initializeSelect2(); // Re-initialize select2 after the DOM is updated
+                        this.initializeSelect2();
                     });
                 })
                 .catch((errors) => {
@@ -229,10 +227,10 @@ export default {
             axios
                 .get(window.url + "api/getImunisasiBayi/")
                 .then((response) => {
-                    this.imunisasis = response.data; // Save WUS data
+                    this.imunisasis = response.data;
 
                     this.$nextTick(() => {
-                        this.initializemultiSelect2(); // Re-initialize select2 after the DOM is updated
+                        this.initializemultiSelect2();
                     });
                 })
                 .catch((errors) => {
@@ -243,59 +241,49 @@ export default {
         initializeSelect2() {
             const vm = this;
 
-            // Initialize single select
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
-                    width: "100%", // Ensure proper dropdown width
+                    width: "100%",
                 })
                 .on("change", function () {
                     const selectedBalitasId = $(this).val();
-                    vm.inputData.bayis_id = selectedBalitasId; // Update inputData
-                    // console.log("Selected WUS ID (Single):", selectedBalitasId);
+                    vm.inputData.bayis_id = selectedBalitasId;
 
                     if (selectedBalitasId) {
-                        vm.getData(selectedBalitasId); // Fetch data for the selected WUS ID
+                        vm.getData(selectedBalitasId);
                     }
                 });
         },
         initializemultiSelect2() {
             const vm = this;
-            // Initialize multi select
             $("#my-select-multiple")
                 .select2({
                     dropdownAutoWidth: true,
-                    width: "100%", // Ensure proper dropdown width
+                    width: "100%",
                 })
                 .on("change", function () {
                     const selectedImunisasiId = $(this).val();
-                    vm.inputData.imunisasi_id = selectedImunisasiId; // Update inputData for multiple WUS IDs
+                    vm.inputData.imunisasi_id = selectedImunisasiId;
                     console.log(
                         "Selected Imunisasi  IDs (Multiple):",
                         selectedImunisasiId
                     );
 
-                    // if (selectedBalitasIds && selectedBalitasIds.length > 0) {
-                    //     vm.getData(selectedBalitasIds);  // Fetch data for the selected WUS IDs
-                    // }
                 });
         },
         getData(taskId) {
-            console.log("Fetching data for Balitas ID:", taskId); // Check if this runs
+            console.log("Fetching data for Balitas ID:", taskId);
 
             axios
                 .get(`${window.url}api/databalita/${taskId}`)
                 .then((response) => {
-                    console.log("Received data:", response.data); // Log the response data
-
-                    // Assuming response.data is an array and you need the first item
+                    console.log("Received data:", response.data);
                     if (
                         Array.isArray(response.data) &&
                         response.data.length > 0
                     ) {
                         const data = response.data[response.data.length - 1];
-
-                        // Only update the specific fields in taskData
                         if (data.pemberian_asi_kuartal > 5) {
                             this.inputData.pemberian_asi_kuartal = 1;
                         } else {
@@ -314,21 +302,17 @@ export default {
                     }
                 })
                 .catch((errors) => {
-                    // Only update the specific fields in taskData
                     this.taskData.tablettambah_darahs_kuartal = "";
                     this.taskData.imunisasi_kehamilans_kuartal = "";
                     this.taskData.vitamin_kuartal = "";
                 });
         },
         sendData() {
-            this.inputData.kegiatanposyandu_balita_id = this.kegiatanId; // Use this.kegiatanId
-
-            // Validate fields
+            this.inputData.kegiatanposyandu_balita_id = this.kegiatanId;
             this.inputErrors.bayis_id = !this.inputData.bayis_id;
             this.inputErrors.lingkep_periksa = !this.inputData.lingkep_periksa;
             this.inputErrors.panjang_badan = !this.inputData.panjang_badan;
             this.inputErrors.berat_badan = !this.inputData.berat_badan;
-            // this.inputErrors.hasil_penimbangan = !this.inputData.hasil_penimbangan;
             this.inputErrors.catatan = !this.inputData.catatan;
             this.inputErrors.imunisasi_id = !this.inputData.imunisasi_id;
 
@@ -350,7 +334,7 @@ export default {
                         this.showAlert();
                         this.$router.push(
                             "/kegiatan-balita-active/" + this.kegiatanId
-                        ); // Use this.kegiatanId
+                        );
                     })
                     .catch((errors) => {
                         console.log(errors);

@@ -7,37 +7,21 @@
                 <div class="card-body">
                     <div class="form-group">
                         <label for="Kontrasepsi">Pilih Alat Kontrasepsi</label>
-                        <select
-                            class="form-control select2"
-                            style="width: 100%"
-                            id="my-select-multiple"
-                            multiple="multiple"
-                            v-model="taskData.kontrasepsi_id"
-                        >
+                        <select class="form-control select2" style="width: 100%" id="my-select-multiple"
+                            multiple="multiple" v-model="taskData.kontrasepsi_id">
                             <option disabled value="">
                                 - Pilih Alat Kontrasepsi -
                             </option>
-                            <option
-                                v-for="task in kontrasepsis"
-                                :key="task.id"
-                                :value="task.id"
-                            >
+                            <option v-for="task in kontrasepsis" :key="task.id" :value="task.id">
                                 {{ task.nama }}
                             </option>
                         </select>
-                        <span
-                            class="text-danger"
-                            v-show="taskErrors.kontrasepsi_id"
-                            >Silahkan Pilih Alat Kontrasepsi!</span
-                        >
+                        <span class="text-danger" v-show="taskErrors.kontrasepsi_id">Silahkan Pilih Alat
+                            Kontrasepsi!</span>
                     </div>
                 </div>
                 <div class="card-footer text-muted text-center">
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        @click="StoreKontrasepsi"
-                    >
+                    <button type="button" class="btn btn-primary" @click="StoreKontrasepsi">
                         Tambah Data
                     </button>
                 </div>
@@ -56,7 +40,7 @@ export default {
     data() {
         return {
             taskData: {
-                kontrasepsi_id: [], // Change to array
+                kontrasepsi_id: [],
                 pus_id: localStorage.getItem("PassedId"),
             },
             taskErrors: {
@@ -91,7 +75,7 @@ export default {
         },
         StoreKontrasepsi() {
             this.taskErrors.kontrasepsi_id =
-                !this.taskData.kontrasepsi_id.length; // Check if array is empty
+                !this.taskData.kontrasepsi_id.length;
             if (!this.taskErrors.kontrasepsi_id) {
                 axios
                     .post(
@@ -103,7 +87,7 @@ export default {
                         console.log("Created ID:", createdId);
                         console.log(response.data);
                         this.showAlert();
-                        this.$router.push("/detail-puses/" + this.pus_id); // Use this.kegiatanId
+                        this.$router.push("/detail-puses/" + this.pus_id);
                     })
                     .catch((errors) => {
                         console.log(errors);
@@ -115,7 +99,7 @@ export default {
                 .get(window.url + "api/getalatkontrasepsi")
                 .then((response) => {
                     this.kontrasepsis = response.data;
-                    console.log("Kontrasepsis fetched:", this.kontrasepsis); // Debugging
+                    console.log("Kontrasepsis fetched:", this.kontrasepsis);
                 })
                 .catch((errors) => {
                     console.log(errors);
@@ -124,7 +108,7 @@ export default {
     },
     mounted() {
         this.getKontrasepsi();
-        this.initializemultiSelect2(); // Initialize here as well
+        this.initializemultiSelect2();
     },
     created() {
         this.pus_id = localStorage.getItem("PassedId");

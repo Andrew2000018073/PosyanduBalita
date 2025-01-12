@@ -1,6 +1,4 @@
 <template>
-
-
     <!-- Modal -->
     <div class="modal fade" id="taskModal" tabindex="-1" role="dialog" aria-labelledby="taskModalLabel"
         aria-hidden="true">
@@ -199,7 +197,7 @@ export default {
                 email: '',
                 password: '',
                 password_confirmation: '',
-                role: '', // Role yang dipilih
+                role: '',
             },
             userserrors: {
                 name: false,
@@ -208,7 +206,7 @@ export default {
                 password_confirmation: false,
                 role: false,
             },
-            roles: [], // Data roles
+            roles: [],
             error: null,
         }
     },
@@ -235,12 +233,11 @@ export default {
         editTask(task) {
             this.editMode = true;
             this.deleteMode = false;
-            this.user = { ...task }; // Use spread operator to copy the task data
+            this.user = { ...task };
             $("#taskModal").modal("show");
         },
         updateTask() {
             console.log(this.user.id);
-            // Validasi input
             this.userserrors.name = !this.user.name;
             this.userserrors.email = !this.user.email;
             this.userserrors.password = !this.user.password;
@@ -255,10 +252,10 @@ export default {
                 this.user.role
             ) {
                 axios
-                    .put(window.url + "api/updatePeserta/" + this.user.id, this.user) // Kirimkan `this.user`
+                    .put(window.url + "api/updatePeserta/" + this.user.id, this.user)
                     .then((response) => {
-                        this.getpengguna(); // Perbarui data pengguna setelah berhasil diupdate
-                        this.closeModal();  // Tutup modal setelah update
+                        this.getpengguna();
+                        this.closeModal();
                     })
                     .catch((errors) => {
                         console.log(errors);
@@ -268,7 +265,7 @@ export default {
 
         async fetchRoles() {
             try {
-                const response = await axios.get(window.url + '/api/roles'); // Endpoint roles
+                const response = await axios.get(window.url + '/api/roles');
                 this.roles = response.data.roles;
             } catch (error) {
                 console.error('Gagal mengambil roles:', error);
@@ -277,11 +274,11 @@ export default {
 
         getpengguna() {
             axios.get(window.url + 'api/getusers').then((response) => {
-                console.log(response.data);  // Cek apakah data pengguna benar-benar dikirim
+                console.log(response.data);
                 if ($.fn.DataTable.isDataTable("#tableuser")) {
                     $("#tableuser").DataTable().destroy();
                 }
-                this.users = response.data.users;  // Pastikan struktur data sesuai
+                this.users = response.data.users;
                 this.$nextTick(() => {
                     $("#tableuser").DataTable({
                         pageLength: 10,

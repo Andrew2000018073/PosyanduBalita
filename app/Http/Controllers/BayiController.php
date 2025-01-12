@@ -10,20 +10,11 @@ use Illuminate\Routing\Controller;
 
 class BayiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function getUmurDalamBulan($tanggalLahir, $waktuperiksa)
     {
-        // Pastikan `$tanggalLahir` adalah format yang valid (d-m-Y)
         $tanggalLahir = Carbon::createFromFormat('d-m-Y', $tanggalLahir);
         $waktuperiksa = Carbon::createFromFormat('d-m-Y', $waktuperiksa);
 
-        // $sekarang = Carbon::now();
-
-        // Hitung umur dalam bulan
         $umurDalamBulan = $tanggalLahir->diffInMonths($waktuperiksa);
 
         return $umurDalamBulan;
@@ -55,7 +46,6 @@ class BayiController extends Controller
 
     public function updateBayis(Request $request)
     {
-        // Add validation to ensure data integrity
         $updated = Bayi::where('id', $request->id)->update([
             'tanggal_lahir' => $request->tanggal_lahir,
             'beratbadan_lahir' => $request->beratbadan_lahir,
@@ -134,27 +124,17 @@ class BayiController extends Controller
 
     public function getberatbadanumur()
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->get();
-
-        // Map data bayi dan hitung umur dalam bulan
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
-
-            // Ambil tgl_kegiatan dari pemeriksaan terakhir (jika ada)
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
-            // dd($tglKegiatan);
-
-            // Hitung umur bayi dalam bulan jika tgl_kegiatan tersedia
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
-
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
@@ -163,15 +143,11 @@ class BayiController extends Controller
                 'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null,
             ];
         });
-
-
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
             $median = [
                 3.3,
@@ -363,14 +339,12 @@ class BayiController extends Controller
                 16
             ];
 
-            $bbu = 0; // Default value for BBU
-            $jenis = ''; // Default value for type of nutritional status
+            $bbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] <= 60) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
 
-                // Calculate BBU for weight
                 if (!is_null($umurBulan) && isset($median[$umurBulan])) {
                     if ($bayi['berat_badan'] > $median[$umurBulan]) {
                         $hitungatas = $bayi['berat_badan'] - $median[$umurBulan];
@@ -381,7 +355,6 @@ class BayiController extends Controller
                         $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                         $bbu = $hitungatas / $hitungbawah;
                     }
-                    // Determine the nutritional status based on BBU value
                     if ($bbu < -3) {
                         $jenis = 'Berat Badan Sangat Kurang';
                     } elseif ($bbu >= -3 && $bbu < -2) {
@@ -408,7 +381,6 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
             $minus1sd = [
                 2.8,
@@ -600,14 +572,12 @@ class BayiController extends Controller
                 21.2
             ];
 
-            $bbu = 0; // Default value for BBU
-            $jenis = ''; // Default value for type of nutritional status
+            $bbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] <= 60) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
 
-                // Calculate BBU for weight
                 if (!is_null($umurBulan) && isset($median[$umurBulan])) {
                     if ($bayi['berat_badan'] > $median[$umurBulan]) {
                         $hitungatas = $bayi['berat_badan'] - $median[$umurBulan];
@@ -618,7 +588,6 @@ class BayiController extends Controller
                         $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                         $bbu = $hitungatas / $hitungbawah;
                     }
-                    // Determine the nutritional status based on BBU value
                     if ($bbu < -3) {
                         $jenis = 'Berat Badan Sangat Kurang';
                     } elseif ($bbu >= -3 && $bbu < -2) {
@@ -642,48 +611,39 @@ class BayiController extends Controller
             ];
         });
 
-
-
         return response()->json(array_merge($hasilLaki->toArray(), $hasilPerempuan->toArray()));
     }
 
     public function getberatbadanumurpos($id)
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->where('posyandus_id', $id)->get();
 
-        // Map data bayi dan hitung umur dalam bulan
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
-
-            // Hitung umur bayi dalam bulan
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
 
 
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
-                'umur_dalam_bulan' => $umurDalamBulan, // Menggunakan umur dalam bulan
+                'umur_dalam_bulan' => $umurDalamBulan,
                 'jenis_kelamin' => $bayi->jenis_kelamin,
-                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null, // Ambil berat badan atau null
+                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null,
             ];
         });
 
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
             $median = [
                 3.3,
@@ -875,14 +835,12 @@ class BayiController extends Controller
                 16
             ];
 
-            $bbu = 0; // Default value for BBU
-            $jenis = ''; // Default value for type of nutritional status
+            $bbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] <= 60) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
 
-                // Calculate BBU for weight
                 if (!is_null($umurBulan) && isset($median[$umurBulan])) {
                     if ($bayi['berat_badan'] > $median[$umurBulan]) {
                         $hitungatas = $bayi['berat_badan'] - $median[$umurBulan];
@@ -893,7 +851,6 @@ class BayiController extends Controller
                         $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                         $bbu = $hitungatas / $hitungbawah;
                     }
-                    // Determine the nutritional status based on BBU value
                     if ($bbu < -3) {
                         $jenis = 'Berat Badan Sangat Kurang';
                     } elseif ($bbu >= -3 && $bbu < -2) {
@@ -920,7 +877,6 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
             $minus1sd = [
                 2.8,
@@ -1112,15 +1068,13 @@ class BayiController extends Controller
                 21.2
             ];
 
-            $bbu = 0; // Default value for BBU
-            $jenis = ''; // Default value for type of nutritional status
+            $bbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
 
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] <= 60) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
 
-                // Calculate BBU for weight
                 if (!is_null($umurBulan) && isset($median[$umurBulan])) {
                     if ($bayi['berat_badan'] > $median[$umurBulan]) {
                         $hitungatas = $bayi['berat_badan'] - $median[$umurBulan];
@@ -1131,7 +1085,6 @@ class BayiController extends Controller
                         $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                         $bbu = $hitungatas / $hitungbawah;
                     }
-                    // Determine the nutritional status based on BBU value
                     if ($bbu < -3) {
                         $jenis = 'Berat Badan Sangat Kurang';
                     } elseif ($bbu >= -3 && $bbu < -2) {
@@ -1162,40 +1115,35 @@ class BayiController extends Controller
 
     public function gettinggibadanumur()
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->get();
 
-        // Map data bayi dan hitung umur dalam bulan
+
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
 
-            // Hitung umur bayi dalam bulan
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
 
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
-                'umur_dalam_bulan' => $umurDalamBulan, // Menggunakan umur dalam bulan
+                'umur_dalam_bulan' => $umurDalamBulan,
                 'jenis_kelamin' => $bayi->jenis_kelamin,
-                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null, // Ambil berat panjang badan atau null
+                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null,
             ];
         });
 
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
             $median = [
                 49.9,
@@ -1390,13 +1338,11 @@ class BayiController extends Controller
                 105.3
             ];
 
-            $tbu = 0; // Default value for tbu
-            $jenis = ''; // Default value for type of nutritional status
+            $tbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
             $umurBulan = $bayi['umur_dalam_bulan'];
 
-            // Calculate BBU for weight
             if (!is_null($umurBulan) && isset($median[$umurBulan])) {
                 if ($bayi['panjang_badan'] > $median[$umurBulan]) {
                     $hitungatas = $bayi['panjang_badan'] - $median[$umurBulan];
@@ -1407,7 +1353,6 @@ class BayiController extends Controller
                     $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                     $tbu = $hitungatas / $hitungbawah;
                 }
-                // Determine the nutritional status based on BBU value
                 if ($tbu < -3) {
                     $jenis = 'Sangat Pendek';
                 } elseif ($tbu >= -3 && $tbu < -2) {
@@ -1431,7 +1376,6 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
             $minus1sd = [
                 47.3,
@@ -1626,14 +1570,12 @@ class BayiController extends Controller
                 114.2
             ];
 
-            $tbu = 0; // Default value for tbu
-            $jenis = ''; // Default value for type of nutritional status
+            $tbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
 
             $umurBulan = $bayi['umur_dalam_bulan'];
 
-            // Calculate BBU for weight
             if (!is_null($umurBulan) && isset($median[$umurBulan])) {
 
                 if ($bayi['panjang_badan'] > $median[$umurBulan]) {
@@ -1645,7 +1587,6 @@ class BayiController extends Controller
                     $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                     $tbu = $hitungatas / $hitungbawah;
                 }
-                // Determine the nutritional status based on BBU value
                 if ($tbu < -3) {
                     $jenis = 'Sangat Pendek';
                 } elseif ($tbu >= -3 && $tbu < -2) {
@@ -1674,40 +1615,34 @@ class BayiController extends Controller
     }
     public function gettinggibadanumurpos($id)
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->where('posyandus_id', $id)->get();
 
-        // Map data bayi dan hitung umur dalam bulan
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
 
-            // Hitung umur bayi dalam bulan
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
 
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
-                'umur_dalam_bulan' => $umurDalamBulan, // Menggunakan umur dalam bulan
+                'umur_dalam_bulan' => $umurDalamBulan,
                 'jenis_kelamin' => $bayi->jenis_kelamin,
-                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null, // Ambil berat panjang badan atau null
+                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null,
             ];
         });
 
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
             $median = [
                 49.9,
@@ -1902,14 +1837,12 @@ class BayiController extends Controller
                 105.3
             ];
 
-            $tbu = 0; // Default value for tbu
-            $jenis = ''; // Default value for type of nutritional status
+            $tbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
 
             $umurBulan = $bayi['umur_dalam_bulan'];
 
-            // Calculate BBU for weight
             if (!is_null($umurBulan) && isset($median[$umurBulan])) {
 
                 if ($bayi['panjang_badan'] > $median[$umurBulan]) {
@@ -1921,7 +1854,6 @@ class BayiController extends Controller
                     $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                     $tbu = $hitungatas / $hitungbawah;
                 }
-                // Determine the nutritional status based on BBU value
                 if ($tbu < -3) {
                     $jenis = 'Sangat Pendek';
                 } elseif ($tbu >= -3 && $tbu < -2) {
@@ -1946,7 +1878,6 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
             $minus1sd = [
                 47.3,
@@ -2141,14 +2072,12 @@ class BayiController extends Controller
                 114.2
             ];
 
-            $tbu = 0; // Default value for tbu
-            $jenis = ''; // Default value for type of nutritional status
+            $tbu = 0;
+            $jenis = '';
 
-            // Only calculate if the age is within the range
 
             $umurBulan = $bayi['umur_dalam_bulan'];
 
-            // Calculate BBU for weight
             if (!is_null($umurBulan) && isset($median[$umurBulan])) {
 
                 if ($bayi['panjang_badan'] > $median[$umurBulan]) {
@@ -2160,7 +2089,6 @@ class BayiController extends Controller
                     $hitungbawah = $median[$umurBulan] - $minus1sd[$umurBulan];
                     $tbu = $hitungatas / $hitungbawah;
                 }
-                // Determine the nutritional status based on BBU value
                 if ($tbu < -3) {
                     $jenis = 'Sangat Pendek';
                 } elseif ($tbu >= -3 && $tbu < -2) {
@@ -2194,12 +2122,11 @@ class BayiController extends Controller
         $currentDate = now();
         $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Prepare the months array for the last 12 months with month names
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $monthIndex = (int)$date->format('m') - 1; // Adjust index for $monthsNames array
+            $monthIndex = (int)$date->format('m') - 1;
 
             $months[$monthKey] = [
                 'month' => $monthsNames[$monthIndex],
@@ -2209,7 +2136,6 @@ class BayiController extends Controller
             ];
         }
 
-        // Retrieve and process the data from the database
         $data = PeriksaBalita::selectRaw('
             DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
             AVG(panjang_badan) as panjang_badan,
@@ -2222,7 +2148,6 @@ class BayiController extends Controller
             ->orderBy('month', 'asc')
             ->get();
 
-        // Populate the months array with data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['panjang_badan'] = round($entry->panjang_badan, 2);
@@ -2239,12 +2164,11 @@ class BayiController extends Controller
         $currentDate = now();
         $monthsNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-        // Prepare the months array for the last 12 months with month names
         $months = [];
         for ($i = 0; $i < 12; $i++) {
             $date = $currentDate->copy()->subMonths($i);
             $monthKey = $date->format('Y-m');
-            $monthIndex = (int)$date->format('m') - 1; // Adjust index for $monthsNames array
+            $monthIndex = (int)$date->format('m') - 1;
 
             $months[$monthKey] = [
                 'month' => $monthsNames[$monthIndex],
@@ -2254,7 +2178,6 @@ class BayiController extends Controller
             ];
         }
 
-        // Retrieve and process the data from the database
         $data = PeriksaBalita::selectRaw('
             DATE_FORMAT(STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y"), "%Y-%m") as month,
             AVG(panjang_badan) as panjang_badan,
@@ -2268,7 +2191,6 @@ class BayiController extends Controller
             ->where('kegiatan_posyandus.posyandu_id', $id)
             ->get();
 
-        // Populate the months array with data
         foreach ($data as $entry) {
             if (isset($months[$entry->month])) {
                 $months[$entry->month]['panjang_badan'] = round($entry->panjang_badan, 2);
@@ -2284,51 +2206,44 @@ class BayiController extends Controller
 
     public function getberatbadantinggi()
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->get();
 
-        // Map data bayi dan hitung umur dalam bulan
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
 
-            // Hitung umur bayi dalam bulan
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
 
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
-                'umur_dalam_bulan' => $umurDalamBulan, // Menggunakan umur dalam bulan
+                'umur_dalam_bulan' => $umurDalamBulan,
                 'jenis_kelamin' => $bayi->jenis_kelamin,
-                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null, // Ambil berat badan atau null
-                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null, // Ambil tinggi badan atau null
+                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null,
+                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null,
             ];
         });
 
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
 
-            $bbu = 0; // Default value for BBU
+            $bbu = 0;
             $median = null;
             $hitungatas = null;
             $hitungbawah = null;
             $bbu = null;
-            $jenis = 'Tidak Diketahui'; // Default status jika tidak ada hasil
+            $jenis = 'Tidak Diketahui';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] < 24) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
                 $acuan = [
@@ -2583,11 +2498,9 @@ class BayiController extends Controller
 
             $tolerance = 0.5;
 
-            // Variabel untuk mencari nilai paling dekat
             $closestRow = null;
-            $closestDifference = PHP_FLOAT_MAX; // Awalnya nilai yang sangat besar
+            $closestDifference = PHP_FLOAT_MAX;
 
-            // Iterasi melalui data untuk mencari nilai paling mendekati
             foreach ($acuan as $row) {
                 $difference = abs($row[0] - $bayi['panjang_badan']);
                 if ($difference <= $tolerance && $difference < $closestDifference) {
@@ -2596,9 +2509,8 @@ class BayiController extends Controller
                 }
             }
             if ($closestRow) {
-                list($A_closest, $B, $C, $D) = $closestRow; // Memisahkan elemen
+                list($A_closest, $B, $C, $D) = $closestRow;
 
-                // Calculate BBU for weight
                 if ($bayi['berat_badan'] > $C) {
                     $median = $C;
                     $hitungatas = $bayi['berat_badan'] - $C;
@@ -2613,7 +2525,6 @@ class BayiController extends Controller
             }
 
 
-            // Determine the nutritional status based on BBU value
             if ($bbu !== null) {
                 if ($bbu < -3) {
                     $jenis = 'Gizi Buruk';
@@ -2647,16 +2558,14 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
-            $bbu = 0; // Default value for BBU
+            $bbu = 0;
             $median = null;
             $hitungatas = null;
             $hitungbawah = null;
             $bbu = null;
-            $jenis = 'Tidak Diketahui'; // Default status jika tidak ada hasil
+            $jenis = 'Tidak Diketahui';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] < 24) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
                 $acuan = [
@@ -2911,11 +2820,9 @@ class BayiController extends Controller
 
             $tolerance = 0.5;
 
-            // Variabel untuk mencari nilai paling dekat
             $closestRow = null;
-            $closestDifference = PHP_FLOAT_MAX; // Awalnya nilai yang sangat besar
+            $closestDifference = PHP_FLOAT_MAX;
 
-            // Iterasi melalui data untuk mencari nilai paling mendekati
             foreach ($acuan as $row) {
                 $difference = abs($row[0] - $bayi['panjang_badan']);
                 if ($difference <= $tolerance && $difference < $closestDifference) {
@@ -2924,9 +2831,8 @@ class BayiController extends Controller
                 }
             }
             if ($closestRow) {
-                list($A_closest, $B, $C, $D) = $closestRow; // Memisahkan elemen
+                list($A_closest, $B, $C, $D) = $closestRow;
 
-                // Calculate BBU for weight
                 if ($bayi['berat_badan'] > $C) {
                     $median = $C;
                     $hitungatas = $bayi['berat_badan'] - $C;
@@ -2941,7 +2847,6 @@ class BayiController extends Controller
             }
 
 
-            // Determine the nutritional status based on BBU value
             if ($bbu !== null) {
                 if ($bbu < -3) {
                     $jenis = 'Gizi Buruk';
@@ -2983,51 +2888,43 @@ class BayiController extends Controller
 
     public function getberatbadantinggiPos($id)
     {
-        // Ambil data bayi dengan pemeriksaan terakhir yang sudah disaring berdasarkan status_kegiatan
         $bayis = Bayi::with(['PeriksaBalita' => function ($query) {
             $query->join('kegiatan_posyandus', 'periksa_balitas.kegiatanposyandu_balita_id', '=', 'kegiatan_posyandus.id')
                 ->whereHas('Kegiatanposyandu', function ($subQuery) {
                     $subQuery->where('status_kegiatan', 'selesai');
                 })
-                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC'); // Urutkan berdasarkan tgl_kegiatan
+                ->orderByRaw('STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, "%d-%m-%Y") DESC');
         }])->where('posyandus_id', $id)->get();
 
-        // Map data bayi dan hitung umur dalam bulan
         $result = $bayis->map(function ($bayi) {
-            // Ambil data pemeriksaan terakhir
             $latestPeriksa = $bayi->PeriksaBalita->first();
             $tglKegiatan = $latestPeriksa ? $latestPeriksa->tgl_kegiatan : null;
 
-            // Hitung umur bayi dalam bulan
             $umurDalamBulan = $tglKegiatan ? $this->getUmurDalamBulan($bayi->tanggal_lahir, $tglKegiatan) : null;
 
             return [
                 'id' => $bayi->id,
                 'nama' => $bayi->namabalita,
-                'umur_dalam_bulan' => $umurDalamBulan, // Menggunakan umur dalam bulan
+                'umur_dalam_bulan' => $umurDalamBulan,
                 'jenis_kelamin' => $bayi->jenis_kelamin,
-                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null, // Ambil berat badan atau null
-                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null, // Ambil tinggi badan atau null
+                'berat_badan' => $latestPeriksa ? $latestPeriksa->berat_badan : null,
+                'panjang_badan' => $latestPeriksa ? $latestPeriksa->panjang_badan : null,
             ];
         });
 
-        // Pisahkan berdasarkan jenis kelamin
         $bayiByGender = $result->groupBy('jenis_kelamin');
 
         $bayiLakiLaki = $bayiByGender->get('Laki-laki', collect());
         $bayiPerempuan = $bayiByGender->get('Perempuan', collect());
 
-        // Perhitungan untuk bayi laki-laki
         $hasilLaki = $bayiLakiLaki->map(function ($bayi) {
 
-            $bbu = 0; // Default value for BBU
+            $bbu = 0;
             $median = null;
             $hitungatas = null;
             $hitungbawah = null;
             $bbu = null;
-            $jenis = 'Tidak Diketahui'; // Default status jika tidak ada hasil
-
-            // Only calculate if the age is within the range
+            $jenis = 'Tidak Diketahui';
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] < 24) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
                 $acuan = [
@@ -3282,11 +3179,9 @@ class BayiController extends Controller
 
             $tolerance = 0.3;
 
-            // Variabel untuk mencari nilai paling dekat
             $closestRow = null;
-            $closestDifference = PHP_FLOAT_MAX; // Awalnya nilai yang sangat besar
+            $closestDifference = PHP_FLOAT_MAX;
 
-            // Iterasi melalui data untuk mencari nilai paling mendekati
             foreach ($acuan as $row) {
                 $difference = abs($row[0] - $bayi['panjang_badan']);
                 if ($difference <= $tolerance && $difference < $closestDifference) {
@@ -3295,9 +3190,8 @@ class BayiController extends Controller
                 }
             }
             if ($closestRow) {
-                list($A_closest, $B, $C, $D) = $closestRow; // Memisahkan elemen
+                list($A_closest, $B, $C, $D) = $closestRow;
 
-                // Calculate BBU for weight
                 if ($bayi['berat_badan'] > $C) {
                     $median = $C;
                     $hitungatas = $bayi['berat_badan'] - $C;
@@ -3312,7 +3206,6 @@ class BayiController extends Controller
             }
 
 
-            // Determine the nutritional status based on BBU value
             if ($bbu !== null) {
                 if ($bbu < -3) {
                     $jenis = 'Gizi Buruk';
@@ -3346,16 +3239,14 @@ class BayiController extends Controller
         });
 
 
-        // Perhitungan untuk bayi perempuan
         $hasilPerempuan = $bayiPerempuan->map(function ($bayi) {
-            $bbu = 0; // Default value for BBU
+            $bbu = 0;
             $median = null;
             $hitungatas = null;
             $hitungbawah = null;
             $bbu = null;
-            $jenis = 'Tidak Diketahui'; // Default status jika tidak ada hasil
+            $jenis = 'Tidak Diketahui';
 
-            // Only calculate if the age is within the range
             if ($bayi['umur_dalam_bulan'] >= 0 && $bayi['umur_dalam_bulan'] < 24) {
                 $umurBulan = $bayi['umur_dalam_bulan'];
                 $acuan = [
@@ -3610,11 +3501,9 @@ class BayiController extends Controller
 
             $tolerance = 0.5;
 
-            // Variabel untuk mencari nilai paling dekat
             $closestRow = null;
-            $closestDifference = PHP_FLOAT_MAX; // Awalnya nilai yang sangat besar
+            $closestDifference = PHP_FLOAT_MAX;
 
-            // Iterasi melalui data untuk mencari nilai paling mendekati
             foreach ($acuan as $row) {
                 $difference = abs($row[0] - $bayi['panjang_badan']);
                 if ($difference <= $tolerance && $difference < $closestDifference) {
@@ -3623,9 +3512,8 @@ class BayiController extends Controller
                 }
             }
             if ($closestRow) {
-                list($A_closest, $B, $C, $D) = $closestRow; // Memisahkan elemen
+                list($A_closest, $B, $C, $D) = $closestRow;
 
-                // Calculate BBU for weight
                 if ($bayi['berat_badan'] > $C) {
                     $median = $C;
                     $hitungatas = $bayi['berat_badan'] - $C;
@@ -3640,7 +3528,6 @@ class BayiController extends Controller
             }
 
 
-            // Determine the nutritional status based on BBU value
             if ($bbu !== null) {
                 if ($bbu < -3) {
                     $jenis = 'Gizi Buruk';

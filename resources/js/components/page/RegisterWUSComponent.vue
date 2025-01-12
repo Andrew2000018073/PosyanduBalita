@@ -267,15 +267,13 @@ export default {
         };
     },
     mounted() {
-        this.getPosyandu(); // Fetch tasks when component is mounted
+        this.getPosyandu();
     },
     beforeDestroy() {
-        // Destroy Select2 instance to avoid memory leaks
         $("#my-select").select2("destroy");
     },
     methods: {
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -287,23 +285,20 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.tasks = response.data; // Simpan data ke properti tasks
-                    this.initializeSelect2(); // Initialize select2 after data is loaded
+                    this.tasks = response.data;
+                    this.initializeSelect2();
                 })
                 .catch((errors) => {
-                    console.log(errors); // Tangani kesalahan jika ada
+                    console.log(errors);
                 });
         },
         initializeSelect2() {
-            const vm = this; // Capture the Vue instance context
-
-            // Initialize select2 and listen for change event
+            const vm = this;
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when select2 value changes
                     vm.taskData.posyandus_id = $(this).val();
                 });
         },

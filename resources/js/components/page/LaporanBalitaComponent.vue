@@ -603,13 +603,13 @@ export default {
     },
     mounted() {
         this.getBayis();
-        this.getPosyandu(); // Fetch tasks when component is mounted
+        this.getPosyandu();
         this.kasihPosyandu();
         this.getBeratBadanUmur();
         this.gettinggibadanumur();
         this.getPeriksa();
         this.getGizi();
-        this.initializeSelect2(); // Initialize select2 after data is loaded
+        this.initializeSelect2();
         window.navigateToDetail = (wusId) => {
             this.$router.push({ path: `/detail-wus/${wusId}` });
         };
@@ -635,29 +635,22 @@ export default {
                     const berat_badan = [];
                     const lingkep_periksa = [];
                     const months = [];
-
-                    // Ubah nilai null menjadi 0 dan tambahkan ke array masing-masing
                     response.data.forEach((item) => {
                         panjang_badan.push(item.panjang_badan ?? 0);
                         berat_badan.push(item.berat_badan ?? 0);
                         lingkep_periksa.push(item.lingkep_periksa ?? 0);
                         months.push(item.month);
                     });
-
-                    // Balik data agar urutan bulan benar
                     const reversedPanjang = panjang_badan.reverse();
                     const reversedBerat = berat_badan.reverse();
                     const reversedLingkep = lingkep_periksa.reverse();
                     const reversedMonths = months.reverse();
-
                     this.lineperiksaSeries = [
                         { name: "Panjang Badan", data: reversedPanjang },
                         { name: "Berat Badan", data: reversedBerat },
                         { name: "Lingkar Perut", data: reversedLingkep },
                     ];
-
                     this.lineperiksaOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
                         if (this.$refs.lineperiksaChart) {
                             this.$refs.lineperiksaChart.updateOptions(
@@ -685,29 +678,22 @@ export default {
                     const berat_badan = [];
                     const lingkep_periksa = [];
                     const months = [];
-
-                    // Ubah nilai null menjadi 0 dan tambahkan ke array masing-masing
                     response.data.forEach((item) => {
                         panjang_badan.push(item.panjang_badan ?? 0);
                         berat_badan.push(item.berat_badan ?? 0);
                         lingkep_periksa.push(item.lingkep_periksa ?? 0);
                         months.push(item.month);
                     });
-
-                    // Balik data agar urutan bulan benar
                     const reversedPanjang = panjang_badan.reverse();
                     const reversedBerat = berat_badan.reverse();
                     const reversedLingkep = lingkep_periksa.reverse();
                     const reversedMonths = months.reverse();
-
                     this.lineperiksaSeries = [
                         { name: "Panjang Badan", data: reversedPanjang },
                         { name: "Berat Badan", data: reversedBerat },
                         { name: "Lingkar Perut", data: reversedLingkep },
                     ];
-
                     this.lineperiksaOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
                         if (this.$refs.lineperiksaChart) {
                             this.$refs.lineperiksaChart.updateOptions(
@@ -726,16 +712,10 @@ export default {
         },
         reinitializeDataModal(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablemodal");
-
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
@@ -752,7 +732,6 @@ export default {
             ];
         },
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -763,16 +742,14 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.tasks = response.data; // Simpan data ke properti tasks
+                    this.tasks = response.data;
                 })
                 .catch((errors) => {
-                    console.log(errors); // Tangani kesalahan jika ada
+                    console.log(errors);
                 });
         },
         initializeSelect2() {
             const vm = this;
-
-            // Destroy instance jika Select2 sudah diinisialisasi sebelumnya
             if ($.fn.select2) {
                 if ($("#my-select").data("select2")) {
                     $("#my-select").select2("destroy");
@@ -781,18 +758,14 @@ export default {
                     $("#posyandu").select2("destroy");
                 }
             }
-
-            // Inisialisasi ulang my-select
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
                     placeholder: "- Pilih opsi -",
                 })
                 .on("change", function () {
-                    vm.taskData.someOtherField = $(this).val(); // Update model Vue sesuai kebutuhan
+                    vm.taskData.someOtherField = $(this).val();
                 });
-
-            // Inisialisasi ulang posyandu
             $("#posyandu")
                 .select2({
                     dropdownAutoWidth: true,
@@ -800,28 +773,22 @@ export default {
                     allowClear: true,
                 })
                 .on("change", function () {
-                    vm.taskData.posyandus_id = $(this).val(); // Update model Vue saat Select2 berubah
+                    vm.taskData.posyandus_id = $(this).val();
                 });
-
             if ($.fn.select2 && $("#filter-posyandu").data("select2")) {
                 $("#filter-posyandu").select2("destroy");
             }
-
-            // Initialize Select2
             $("#filter-posyandu")
                 .select2({
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
                     vm.filters.posyandu_id = $(this).val();
-                    vm.applyFilters(); // Call applyFilters directly on change
+                    vm.applyFilters();
                 });
-
             if ($.fn.select2 && $("#filtergizi").data("select2")) {
                 $("#filtergizi").select2("destroy");
             }
-
-            // Initialize Select2
             $("#filtergizi")
                 .select2({
                     placeholder: "Tampilkan daftar anak",
@@ -829,14 +796,11 @@ export default {
                 })
                 .on("change", function () {
                     const selectedValue = $(this).val();
-                    vm.handleFilterChange(selectedValue); // Pass selected value to handler
+                    vm.handleFilterChange(selectedValue);
                 });
         },
-
         handleFilterChange(selectedValue) {
             this.resetModes();
-
-            // Tentukan modal data berdasarkan nilai pilihan
             switch (selectedValue) {
                 case "sangatPendek":
                     this.sangatPendekMode = true;
@@ -892,14 +856,11 @@ export default {
                     this.modaltampildata = null;
                     break;
             }
-
-            // Tampilkan data modal jika ada
             if (this.modaltampildata) {
                 this.reinitializeDataModal(this.modaltampildata);
             }
         },
         resetModes() {
-            // Reset semua mode dengan satu langkah
             this.bbskurangMode = false,
                 this.bbkurangMode = false,
                 this.sangatpendekMode = false,
@@ -912,25 +873,15 @@ export default {
                 this.obesitasMode = false;
         },
         getAge(dateString) {
-            // Split the date string by '-'
             const [day, month, year] = dateString.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
             const today = new Date();
-
-            // Calculate the difference in years and months
             const yearsDiff = today.getFullYear() - birthDate.getFullYear();
             const monthsDiff = today.getMonth() - birthDate.getMonth();
-
-            // Calculate the total age in months
             let ageInMonths = yearsDiff * 12 + monthsDiff;
-
-            // Adjust if the current day of the month is earlier than the birth date's day
             if (today.getDate() < birthDate.getDate()) {
                 ageInMonths--;
             }
-
             return ageInMonths;
         },
         getBeratBadanUmur() {
@@ -940,30 +891,18 @@ export default {
             axios
                 .get(window.url + "api/getberatbadanumur")
                 .then((response) => {
-
-                    // Pastikan data adalah array
                     const data = response.data;
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
-                    // Simpan data ke variabel Vue
                     this.bandingberat = data;
-
-                    // Inisialisasi kategori untuk laki-laki dan perempuan
                     let giziBurukL = 0, giziKurangL = 0, giziBaikL = 0, giziLebihL = 0;
                     let giziBurukP = 0, giziKurangP = 0, giziBaikP = 0, giziLebihP = 0;
-
-                    // Iterasi data untuk menghitung jumlah berdasarkan kategori
                     this.bandingberat.forEach((item) => {
-
-                        // Debugging: cek properti setiap item
-
-                        // Pastikan ada data yang valid
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap untuk item:", item);
-                            return; // Lewati item jika tidak lengkap
+                            return;
                         }
                         if (item.jenis_kelamin === "Laki-laki") {
                             switch (item.jenis) {
@@ -1009,9 +948,6 @@ export default {
                             console.log("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // Masukkan hasil ke dalam pie chart series
                     this.pieBBULSeries = [giziBurukL, giziKurangL, giziBaikL, giziLebihL];
                     this.pieBBUPSeries = [giziBurukP, giziKurangP, giziBaikP, giziLebihP];
                 })
@@ -1026,28 +962,18 @@ export default {
             axios
                 .get(window.url + "api/getberatbadanumurpos/" + posyanduId)
                 .then((response) => {
-
-                    // Pastikan data adalah array
                     const data = response.data;
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
-                    // Simpan data ke variabel Vue
                     this.bandingberat = data;
-
-                    // Inisialisasi kategori untuk laki-laki dan perempuan
                     let giziBurukL = 0, giziKurangL = 0, giziBaikL = 0, giziLebihL = 0;
                     let giziBurukP = 0, giziKurangP = 0, giziBaikP = 0, giziLebihP = 0;
-
-                    // Iterasi data untuk menghitung jumlah berdasarkan kategori
                     this.bandingberat.forEach((item) => {
-
-                        // Pastikan ada data yang valid
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap untuk item:", item);
-                            return; // Lewati item jika tidak lengkap
+                            return;
                         }
                         if (item.jenis_kelamin === "Laki-laki") {
                             switch (item.jenis) {
@@ -1093,9 +1019,6 @@ export default {
                             console.log("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // Masukkan hasil ke dalam pie chart series
                     this.pieBBULSeries = [giziBurukL, giziKurangL, giziBaikL, giziLebihL];
                     this.pieBBUPSeries = [giziBurukP, giziKurangP, giziBaikP, giziLebihP];
                 })
@@ -1103,34 +1026,25 @@ export default {
                     console.error("Error saat mengambil data:", errors);
                 });
         },
-
         gettinggibadanumur() {
             this.modaltampildatasangatpendek = [];
             this.modaltampildatapendek = [];
             axios
                 .get(window.url + "api/gettinggibadanumur")
                 .then((response) => {
-                    // console.log("Data API diterima:", response.data);
                     const data = response.data;
-
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
                     this.bandingberat = data;
-
                     let sangatPendekL = 0, pendekL = 0, normalL = 0, tinggiL = 0;
                     let sangatPendekP = 0, pendekP = 0, normalP = 0, tinggiP = 0;
-
                     this.bandingberat.forEach((item) => {
-                        // console.log("Item saat ini:", item);
-
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap:", item);
                             return;
                         }
-
                         if (item.jenis_kelamin === "Laki-laki") {
                             switch (item.jenis) {
                                 case "Sangat Pendek": sangatPendekL++;
@@ -1155,18 +1069,11 @@ export default {
                             console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // console.log("Hasil Laki-laki:", sangatPendekL, pendekL, normalL, tinggiL);
-                    // console.log("Hasil Perempuan:", sangatPendekP, pendekP, normalP, tinggiP);
-
                     this.pieTBULSeries = [sangatPendekL, pendekL, normalL, tinggiL];
                     this.pieTBUPSeries = [sangatPendekP, pendekP, normalP, tinggiP];
-
                     if (!this.pieTBULSeries.some(value => value > 0)) {
                         console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
                     }
-
                     if (!this.pieTBUPSeries.some(value => value > 0)) {
                         console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
                     }
@@ -1181,22 +1088,15 @@ export default {
             axios
                 .get(window.url + "api/gettinggibadanumurpos/" + posyanduId)
                 .then((response) => {
-                    // console.log("Data API diterima:", response.data);
                     const data = response.data;
-
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
                     this.bandingberat = data;
-
                     let sangatPendekL = 0, pendekL = 0, normalL = 0, tinggiL = 0;
                     let sangatPendekP = 0, pendekP = 0, normalP = 0, tinggiP = 0;
-
                     this.bandingberat.forEach((item) => {
-                        // console.log("Item saat ini:", item);
-
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap:", item);
                             return;
@@ -1226,19 +1126,11 @@ export default {
                             console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // console.log("Hasil Laki-laki:", sangatPendekL, pendekL, normalL, tinggiL);
-                    // console.log("Hasil Perempuan:", sangatPendekP, pendekP, normalP, tinggiP);
-
-                    // console.log(this.modaltampildata);
                     this.pieTBULSeries = [sangatPendekL, pendekL, normalL, tinggiL];
                     this.pieTBUPSeries = [sangatPendekP, pendekP, normalP, tinggiP];
-
                     if (!this.pieTBULSeries.some(value => value > 0)) {
                         console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
                     }
-
                     if (!this.pieTBUPSeries.some(value => value > 0)) {
                         console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
                     }
@@ -1257,22 +1149,15 @@ export default {
             axios
                 .get(window.url + "api/getberatbadantinggi")
                 .then((response) => {
-                    // console.log("Data API diterima:", response.data);
                     const data = response.data;
-
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
                     this.bandinggizi = data;
-
                     let giziburukL = 0, gizikurangL = 0, normalL = 0, bgizilebihL = 0, gizilebihL = 0, obesitasL = 0;
                     let giziburukP = 0, giziKurangP = 0, normalP = 0, bgizilebihP = 0, gizilebihP = 0, obesitasP = 0;
-
                     this.bandinggizi.forEach((item) => {
-                        // console.log("Item saat ini:", item);
-
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap:", item);
                             return;
@@ -1312,11 +1197,6 @@ export default {
                             console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // console.log("Hasil Laki-laki:", giziburukL, gizikurangL, normalL, gizilebihL);
-                    // console.log("Hasil Perempuan:", giziburukP, giziKurangP, normalP, gizilebihP);
-
                     this.pieBBTBLSeries = [giziburukL, gizikurangL, normalL, bgizilebihL, gizilebihL, obesitasL];
                     this.pieBBTBPSeries = [giziburukP, giziKurangP, normalP, bgizilebihP, gizilebihP, obesitasP];
 
@@ -1341,27 +1221,19 @@ export default {
             axios
                 .get(window.url + "api/getberatbadantinggiPos/" + $id)
                 .then((response) => {
-                    // console.log("Data API diterima:", response.data);
                     const data = response.data;
-
                     if (!Array.isArray(data)) {
                         console.error("Data yang diterima bukan array:", data);
                         return;
                     }
-
                     this.bandinggizi = data;
-
                     let giziburukL = 0, gizikurangL = 0, normalL = 0, bgizilebihL = 0, gizilebihL = 0, obesitasL = 0;
                     let giziburukP = 0, giziKurangP = 0, normalP = 0, bgizilebihP = 0, gizilebihP = 0, obesitasP = 0;
-
                     this.bandinggizi.forEach((item) => {
-                        // console.log("Item saat ini:", item);
-
                         if (!item.jenis_kelamin || !item.jenis) {
                             console.warn("Data tidak lengkap:", item);
                             return;
                         }
-
                         if (item.jenis_kelamin === "Laki-laki") {
                             switch (item.jenis) {
                                 case "Gizi Buruk": giziburukL++;
@@ -1396,11 +1268,6 @@ export default {
                             console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
                         }
                     });
-
-
-                    // console.log("Hasil Laki-laki:", giziburukL, gizikurangL, normalL, gizilebihL);
-                    // console.log("Hasil Perempuan:", giziburukP, giziKurangP, normalP, gizilebihP);
-
                     this.pieBBTBLSeries = [giziburukL, gizikurangL, normalL, bgizilebihL, gizilebihL, obesitasL];
                     this.pieBBTBPSeries = [giziburukP, giziKurangP, normalP, bgizilebihP, gizilebihP, obesitasP];
 
@@ -1419,7 +1286,6 @@ export default {
         closeModal() {
             $("#taskModal").modal("hide");
         },
-
         kasihPosyandu() {
             axios
                 .get(window.url + "api/getPosyandu")
@@ -1433,7 +1299,6 @@ export default {
         applyFilters() {
             if (this.filters.posyandu_id) {
                 const posyanduId = this.filters.posyandu_id;
-                // console.log("Posyandu ID:", posyanduId);
                 this.getBayisPosyandu(posyanduId);
                 this.getberatbadanumurPos(posyanduId);
                 this.gettinggibadanumurPos(posyanduId);
@@ -1452,8 +1317,8 @@ export default {
             axios
                 .get(window.url + "api/getBayi")
                 .then((response) => {
-                    this.balitas = response.data; // Set data
-                    this.reinitializeDataTable(this.balitas); // Pass the fetched data
+                    this.balitas = response.data;
+                    this.reinitializeDataTable(this.balitas);
                     this.getPosyandu();
                 })
                 .catch((errors) => {
@@ -1464,8 +1329,8 @@ export default {
             axios
                 .get(window.url + "api/getBayiPosyandu/" + posyanduId)
                 .then((response) => {
-                    this.balitas = response.data; // Set data
-                    this.reinitializeDataTable(this.balitas); // Pass the fetched data
+                    this.balitas = response.data;
+                    this.reinitializeDataTable(this.balitas);
                     this.getPosyandu();
                 })
                 .catch((errors) => {
@@ -1474,23 +1339,16 @@ export default {
         },
         reinitializeDataTable(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablebayis");
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataTableColumns(),
             });
-
-            // Attach event listeners
             this.attachEventListeners();
         },
         getDataTableColumns() {
@@ -1589,8 +1447,6 @@ export default {
         editTask(task) {
             this.editMode = true;
             this.deleteMode = false;
-
-            // Konversi tanggal dari string ke Date object
             this.taskData = {
                 ...task,
                 tanggal_lahir: parse(task.tanggal_lahir, 'dd-MM-yyyy', new Date())
@@ -1598,7 +1454,7 @@ export default {
             this.$nextTick(() => {
                 $("#taskModal").modal("show");
                 $("#taskModal").on("shown.bs.modal", () => {
-                    this.initializeSelect2(); // Pastikan dipanggil setelah modal ditampilkan
+                    this.initializeSelect2();
                 });
             });
         },
@@ -1621,7 +1477,7 @@ export default {
 
             this.taskData.tanggal_lahir = this.formatDate(
                 this.taskData.tanggal_lahir
-            ); // Date will be in selected format
+            );
 
             if (
                 this.taskData.tanggal_lahir &&

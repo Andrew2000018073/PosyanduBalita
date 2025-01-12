@@ -8,11 +8,6 @@ use App\Http\Requests\UpdatePivotKontrasepsiPusRequest;
 
 class PivotKontrasepsiPusController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
 
     public function getAlatPakai($id)
     {
@@ -22,7 +17,7 @@ class PivotKontrasepsiPusController extends Controller
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'nama_kontrasepsi' => $item->kontrasepsi ? $item->kontrasepsi->nama : 'N/A', // Handle null
+                    'nama_kontrasepsi' => $item->kontrasepsi ? $item->kontrasepsi->nama : 'N/A',
                     'status' => $item->status,
                     'tanggal_pertama_pakai' => $item->tanggal_pertama_pakai,
                     'tanggal_berhenti_pakai' => $item->tanggal_berhenti_pakai,
@@ -34,8 +29,6 @@ class PivotKontrasepsiPusController extends Controller
 
     public function deleteKontrasepsiPakai($id)
     {
-        // Delete related records from imunisasipvbalita (correct table name)
-        // Now delete the record from periksa_balitas
         PivotKontrasepsiPus::where('id', $id)->delete();
 
         return response()->json('Dihapus');
@@ -52,74 +45,17 @@ class PivotKontrasepsiPusController extends Controller
     }
 
 
-    public function index()
-    {
-        //
-    }
+    public function index() {}
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StorePivotKontrasepsiPusRequest  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(StorePivotKontrasepsiPusRequest $request)
-    {
-        //
-    }
+    public function store(StorePivotKontrasepsiPusRequest $request) {}
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\PivotKontrasepsiPus  $pivotKontrasepsiPus
-     * @return \Illuminate\Http\Response
-     */
-    public function show(PivotKontrasepsiPus $pivotKontrasepsiPus)
-    {
-        //
-    }
+    public function show(PivotKontrasepsiPus $pivotKontrasepsiPus) {}
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\PivotKontrasepsiPus  $pivotKontrasepsiPus
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(PivotKontrasepsiPus $pivotKontrasepsiPus)
-    {
-        //
-    }
+    public function edit(PivotKontrasepsiPus $pivotKontrasepsiPus) {}
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \App\Http\Requests\UpdatePivotKontrasepsiPusRequest  $request
-     * @param  \App\Models\PivotKontrasepsiPus  $pivotKontrasepsiPus
-     * @return \Illuminate\Http\Response
-     */
-    public function update(UpdatePivotKontrasepsiPusRequest $request, PivotKontrasepsiPus $pivotKontrasepsiPus)
-    {
-        //
-    }
+    public function update(UpdatePivotKontrasepsiPusRequest $request, PivotKontrasepsiPus $pivotKontrasepsiPus) {}
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\PivotKontrasepsiPus  $pivotKontrasepsiPus
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(PivotKontrasepsiPus $pivotKontrasepsiPus)
-    {
-        //
-    }
+    public function destroy(PivotKontrasepsiPus $pivotKontrasepsiPus) {}
 }

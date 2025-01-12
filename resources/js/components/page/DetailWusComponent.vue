@@ -23,7 +23,6 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <!-- Form or content based on deleteMode -->
                     <div v-if="editMode">
                         <div class="form-group">
                             <label for="tanggal_lahir">Tanggal Lahir</label>
@@ -46,7 +45,6 @@
                                 class="form-control" id="berat" placeholder="Masukan berat badan(kg)" />
                             <span class="text-danger" v-show="taskErrors.beratbadan_lahir">Silahkan masukan BERAT
                                 BADAN!</span>
-                            <!-- <span class="text-danger">Silahkan masukan lila!</span> -->
                         </div>
                         <div class="form-group">
                             <label for="lila">Lingkar kepala lahir(cm)</label>
@@ -123,7 +121,6 @@
                         Berhenti Menggunakan
                     </button>
                 </div>
-                <!-- Add Mode -->
             </div>
         </div>
     </div>
@@ -441,7 +438,6 @@ export default {
                 tanggal_awal_hamil: false,
                 tanggal_daftar: false,
             },
-            // Data and options for the Line chart
             lineperiksaSeries: [],
             lineperiksaOptions: {
                 chart: {
@@ -469,7 +465,7 @@ export default {
                 dataLabels: { enabled: true },
                 stroke: {
                     curve: "smooth",
-                    connectNulls: true, // Menambahkan connectNulls
+                    connectNulls: true,
                 },
                 title: {
                     text: "Rata-rata pemeriksaan WUS",
@@ -481,7 +477,7 @@ export default {
                 },
                 markers: { size: 1 },
                 xaxis: {
-                    categories: [], // Kosong awalnya
+                    categories: [],
                     title: { text: "Month" },
                 },
                 yaxis: {
@@ -503,20 +499,14 @@ export default {
         getAge(dateString) {
             if (!dateString || typeof dateString !== "string") {
                 console.error("Invalid date string:", dateString);
-                return "N/A"; // Return a fallback value if dateString is invalid
+                return "N/A";
             }
-
-            // Split the date string by '-' (assuming format is 'dd-mm-yyyy')
             const [day, month, year] = dateString.split("-");
-
             if (!day || !month || !year) {
                 console.error("Incomplete date:", dateString);
-                return "N/A"; // Return fallback if dateString does not have three parts
+                return "N/A";
             }
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
-
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -531,22 +521,17 @@ export default {
 
         initializeSelect2() {
             const vm = this;
-
-            // Check if Select2 is already initialized, if so, destroy it
             if (
                 $.fn.select2 &&
                 $("#my-select").hasClass("select2-hidden-accessible")
             ) {
                 $("#my-select").select2("destroy");
             }
-
-            // Initialize Select2 again
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.pus_id = $(this).val();
                 });
             $("#posyandu")
@@ -554,12 +539,10 @@ export default {
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.posyandus_id = $(this).val();
                 });
         },
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -572,8 +555,6 @@ export default {
             this.hapusKontrasepsi = false;
             this.selesaiKontrasepsi = false;
             this.taskData = { ...task };
-
-            // Convert tanggal_lahir to Date object if it's a string
             if (typeof this.taskData.tanggal_lahir === "string") {
                 const [day, month, year] =
                     this.taskData.tanggal_lahir.split("-");
@@ -582,12 +563,12 @@ export default {
                 );
             }
 
-            this.taskData.posyandus_id = task.posyandus_id || ""; // Set the selected posyandu ID
+            this.taskData.posyandus_id = task.posyandus_id || "";
             $("#taskModal").modal("show");
             this.$nextTick(() => {
                 $("#posyandu")
                     .val(this.taskData.posyandus_id)
-                    .trigger("change"); // Set value in Select2
+                    .trigger("change");
             });
 
             $("#taskModal").modal("show");
@@ -616,7 +597,7 @@ export default {
 
             this.taskData.tanggal_lahir = this.formatDate(
                 this.taskData.tanggal_lahir
-            ); // Date will be in selected format
+            );
 
             if (
                 this.taskData.tanggal_lahir &&
@@ -667,7 +648,7 @@ export default {
             axios
                 .get(window.url + "api/detail-wus/" + id)
                 .then((response) => {
-                    this.informasis = response.data; // Store the received data in taskData
+                    this.informasis = response.data;
                 })
                 .catch((error) => {
                     console.error("Error fetching data:", error);
@@ -678,10 +659,7 @@ export default {
             axios
                 .get(window.url + "api/getPusid/" + id)
                 .then((response) => {
-                    this.pusid = response.data; // Assuming it's a single ID or an array of IDs
-                    // console.log("Pusid:", this.pusid);
-
-                    // Call getBayis() after setting pusid
+                    this.pusid = response.data;
                     this.getBayis();
                 })
                 .catch((error) => {
@@ -689,9 +667,6 @@ export default {
                 });
         },
         getBayis() {
-            // Ensure pusid is defined
-
-            // Assuming `this.pusid` is a single ID; if it's an array, adjust the URL as needed
             axios
                 .get(window.url + "api/getAnak/" + this.pusid)
                 .then((response) => {
@@ -718,15 +693,10 @@ export default {
             axios
                 .get(window.url + "api/getHamil/" + this.$route.params.id)
                 .then((response) => {
-                    // Destroy DataTable if it already exists
                     if ($.fn.DataTable.isDataTable("#tablehamil")) {
                         $("#tablehamil").DataTable().destroy();
                     }
-
-                    // Update the kehamilan data
                     this.kehamilan = response.data;
-
-                    // Initialize DataTable after Vue updates the DOM
                     this.$nextTick(() => {
                         $("#tablehamil").DataTable({
                             pageLength: 10,
@@ -740,26 +710,16 @@ export default {
         },
 
         getAgeInMonths(tanggal) {
-            // Split the date string by '-'
             const lahir = tanggal;
             const [day, month, year] = lahir.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
             const today = new Date();
-
-            // Calculate the difference in years and months
             const yearsDiff = today.getFullYear() - birthDate.getFullYear();
             const monthsDiff = today.getMonth() - birthDate.getMonth();
-
-            // Calculate the total age in months
             let ageInMonths = yearsDiff * 12 + monthsDiff;
-
-            // Adjust if the current day of the month is earlier than the birth date's day
             if (today.getDate() < birthDate.getDate()) {
                 ageInMonths--;
             }
-
             return ageInMonths;
         },
         closeModal() {
@@ -809,21 +769,18 @@ export default {
                 });
         },
         storeIdAndNavigate() {
-            const pusId = this.$route.params.id; // Get the ID from the route parameters
-            console.log("Storing ID:", pusId); // Log the ID to ensure it’s correct
-
-            // Check if pusId is defined before storing
+            const pusId = this.$route.params.id;
+            console.log("Storing ID:", pusId);
             if (pusId) {
-                localStorage.setItem("PassedId", pusId); // Store the ID
+                localStorage.setItem("PassedId", pusId);
                 console.log(
                     "Current localStorage value for PassedId:",
                     localStorage.getItem("PassedId")
-                ); // Verify it's stored correctly
+                );
             } else {
-                console.error("No ID found to store."); // Error handling if ID is not found
+                console.error("No ID found to store.");
             }
-
-            this.$router.push({ name: "tambah-kontrasepsi" }); // Navigate to the next page
+            this.$router.push({ name: "tambah-kontrasepsi" });
         },
         getPeriksa() {
             axios
@@ -839,8 +796,6 @@ export default {
                     const sistol = [];
                     const tinggi_fundus = [];
                     const months = [];
-
-                    // Ubah nilai null menjadi 0 dan tambahkan ke array masing-masing
                     response.data.forEach((item) => {
                         lila_periksa.push(item.lila_periksa ?? 0);
                         lingkarperut_periksa.push(
@@ -851,15 +806,12 @@ export default {
                         tinggi_fundus.push(item.tinggi_fundus ?? 0);
                         months.push(item.month);
                     });
-
-                    // Balik data agar urutan bulan benar
                     const reversedLila = lila_periksa.reverse();
                     const reversedLingkarPerut = lingkarperut_periksa.reverse();
                     const reversedDiastol = diastol.reverse();
                     const reversedSistol = sistol.reverse();
                     const reversedTinggiFundus = tinggi_fundus.reverse();
                     const reversedMonths = months.reverse();
-
                     this.lineperiksaSeries = [
                         { name: "Lingkar lengan", data: reversedLila },
                         { name: "Lingkar perut", data: reversedLingkarPerut },
@@ -867,9 +819,7 @@ export default {
                         { name: "Sistol", data: reversedSistol },
                         { name: "Tinggi fundus", data: reversedTinggiFundus },
                     ];
-
                     this.lineperiksaOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
                         if (this.$refs.lineperiksaChart) {
                             this.$refs.lineperiksaChart.updateOptions(
@@ -889,8 +839,6 @@ export default {
         editKehamil(task) {
             this.editHamil = true;
             this.deleteHamil = false;
-
-            // Parse tanggal with moment.js to ensure format is consistent
             this.hamil = {
                 ...task,
                 tanggal_awal_hamil: task.tanggal_awal_hamil
@@ -900,65 +848,48 @@ export default {
                     ? moment(task.tanggal_daftar, "DD-MM-YYYY").toDate()
                     : null,
             };
-
-            console.log("Editing data:", this.hamil);
-
-            // Show the modal
             $("#hamilModal").modal("show");
         },
-
         updateHamil() {
-            // Pastikan tanggal diubah menjadi format yang diinginkan
             this.hamil.tanggal_awal_hamil = moment(
                 this.hamil.tanggal_awal_hamil
             ).format("DD-MM-YYYY");
             this.hamil.tanggal_daftar = moment(
                 this.hamil.tanggal_daftar
             ).format("DD-MM-YYYY");
-
-            // Pastikan taskData sudah diupdate dengan data terbaru dari hamil
             axios
                 .post(
                     window.url + "api/updateHamil/" + this.hamil.id,
                     this.hamil
                 )
                 .then((response) => {
-                    // Jika update berhasil, refresh data atau lakukan tindakan lain
                     console.log("Data berhasil diperbarui:", response);
-                    this.getHamil(); // Jika Anda ingin memperbarui tampilan setelah update
+                    this.getHamil();
                 })
                 .catch((error) => {
-                    // Tangani error
                     console.log("Error saat memperbarui data:", error);
                 })
                 .finally(() => {
-                    // Tutup modal setelah proses selesai
                     $("#hamilModal").modal("hide");
                 });
         },
         removeHamil(task) {
-            // Set mode flags for deleting a "hamil" entry
             this.deleteHamil = true;
             this.editHamil = false;
-
-            // Populate the task data for modal display
-            this.hamil = { ...task }; // Use `hamil` to match your modal's data reference
-            $("#hamilModal").modal("show"); // Show the modal
+            this.hamil = { ...task }; $("#hamilModal").modal("show");
         },
-
         hapusHamil() {
-            // Call the delete endpoint with the correct ID
             axios
-                .post(window.url + "api/deleteHamil/" + this.hamil.id) // Use `hamil.id` to get the current item ID
+                .post(window.url + "api/deleteHamil/" + this.hamil.id)
                 .then((response) => {
-                    this.getHamil(); // Refresh the data after deletion
+                    this.getHamil();
                     console.log("Data berhasil dihapus:", response);
                 })
                 .catch((errors) => {
                     console.log("Error saat menghapus data:", errors);
                 })
                 .finally(() => {
-                    $("#hamilModal").modal("hide"); // Close the modal after completion
+                    $("#hamilModal").modal("hide");
                 });
         },
     },

@@ -221,7 +221,7 @@ export default {
     },
     mounted() {
         this.getWus();
-        this.getPosyandu(); // Fetch tasks when component is mounted
+        this.getPosyandu();
         window.navigateToDetail = (wusId) => {
             this.$router.push({ path: `/detail-wus/${wusId}` });
         };
@@ -234,7 +234,6 @@ export default {
 
     methods: {
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -245,17 +244,15 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.tasks = response.data; // Simpan data ke properti tasks
-                    this.initializeSelect2(); // Initialize select2 after data is loaded
+                    this.tasks = response.data;
+                    this.initializeSelect2();
                 })
                 .catch((errors) => {
-                    console.log(errors); // Tangani kesalahan jika ada
+                    console.log(errors);
                 });
         },
         initializeSelect2() {
             const vm = this;
-
-            // Check if Select2 is already initialized
             if ($.fn.select2) {
                 if ($("#my-select").data("select2")) {
                     $("#my-select").select2("destroy");
@@ -269,18 +266,14 @@ export default {
                     allowClear: true,
                 })
                 .on("change", function () {
-                    vm.taskData.posyandus_id = $(this).val(); // Update model Vue saat Select2 berubah
+                    vm.taskData.posyandus_id = $(this).val();
                     console.log(vm.taskData.posyandus_id);
                 });
         },
 
         getAge(dateString) {
-            // Split the date string by '-'
             const [day, month, year] = dateString.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
-
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -300,9 +293,8 @@ export default {
             axios
                 .get(window.url + "api/getWus")
                 .then((response) => {
-                    this.wuses = response.data; // Set data
-                    this.reinitializeDataTable(this.wuses); // Pass the fetched data
-                    // console.log("Fetched Wus:", this.wuses);
+                    this.wuses = response.data;
+                    this.reinitializeDataTable(this.wuses);
                     this.getPosyandu();
                 })
                 .catch((errors) => {
@@ -312,45 +304,30 @@ export default {
 
         reinitializeDataModal(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablekek");
-
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataModalColumns(),
             });
-
-            // Attach event listeners
         },
 
         reinitializeDataTable(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablewus");
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataTableColumns(),
             });
-
-            // Attach event listeners
             this.attachEventListeners();
         },
 
@@ -473,15 +450,14 @@ export default {
             this.$nextTick(() => {
                 $("#taskModal").modal("show");
                 $("#taskModal").on("shown.bs.modal", () => {
-                    this.initializeSelect2(); // Pastikan dipanggil setelah modal ditampilkan
+                    this.initializeSelect2();
                 });
             });
         },
 
         updateTask() {
             this.validateTask();
-            console.log("Updating task with ID:", this.taskData.wus_id); // Make sure the ID is set
-
+            console.log("Updating task with ID:", this.taskData.wus_id);
             if (this.isTaskValid()) {
                 axios
                     .post(
@@ -539,20 +515,14 @@ export default {
 <style scoped>
 @media (max-width: 768px) {
 
-
-
-
     table td,
     table th {
         padding: 4px 6px;
-        /* Atur padding sel agar lebih kecil */
         font-size: 12px;
-        /* Perkecil ukuran font */
     }
 
     .table-header {
         background-color: #28a745;
-        /* Hijau sesuai tema */
         color: white;
         padding: 6px 10px;
         text-align: center;

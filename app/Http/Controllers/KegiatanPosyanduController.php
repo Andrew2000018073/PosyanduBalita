@@ -21,8 +21,8 @@ class KegiatanPosyanduController extends Controller
      */
     public function getKegiatanBulanIni()
     {
-        $currentMonth = Carbon::now()->month; // Mendapatkan bulan saat ini
-        $currentYear = Carbon::now()->year;   // Mendapatkan tahun saat ini
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
 
         $kegiatanCount = KegiatanPosyandu::whereRaw('MONTH(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$currentMonth])
             ->whereRaw('YEAR(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$currentYear])
@@ -33,7 +33,6 @@ class KegiatanPosyanduController extends Controller
 
     public function getKegiatan($id)
     {
-        // Use the $id directly from the route
         $posyandu = KegiatanPosyandu::withCount(['periksawus', 'PeriksaBalita'])
             ->where('posyandu_id', $id)
             ->get();
@@ -46,7 +45,6 @@ class KegiatanPosyanduController extends Controller
     }
     public function getKegiatanlast5()
     {
-        // Menggunakan orderByRaw untuk mengurutkan berdasarkan tgl_kegiatan yang formatnya d-m-Y
         $posyandu = KegiatanPosyandu::withCount(['periksawus', 'PeriksaBalita'])
             ->orderByRaw('STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y") DESC') // Mengubah format d-m-Y ke date untuk sorting
             ->limit(10)
@@ -61,21 +59,17 @@ class KegiatanPosyanduController extends Controller
 
     public function getKegiatanActive($id)
     {
-        // Retrieve the posyandu records
         $posyandu = KegiatanPosyandu::where('id', $id)->get();
 
-        // Check if the collection is empty
         if ($posyandu->isEmpty()) {
             return response()->json(['message' => 'Posyandu not found'], 404);
         }
 
-        // Return the records if they exist
         return response()->json($posyandu);
     }
 
     public function getStatus($id)
     {
-        // Use the $id directly from the route
         return KegiatanPosyandu::where('id', $id)->get();
     }
     public function deleteKegiatan($id)
@@ -128,7 +122,6 @@ class KegiatanPosyanduController extends Controller
         $jumlahPesertaWusTotal = 0;
         $jumlahPesertaBalitaTotal = 0;
 
-        // Ambil semua kegiatan selesai pada bulan ini
         $kegiatanWusBulanIni = KegiatanPosyandu::where('posyandu_id', $id)
             ->where('status_kegiatan', 'selesai')
             ->where('tipe_kegiatan', 'WUS')
@@ -137,7 +130,6 @@ class KegiatanPosyanduController extends Controller
             ->get();
 
         foreach ($kegiatanWusBulanIni as $kegiatan) {
-            // Menghitung jumlah WUS yang terdaftar dalam periksawuses untuk setiap kegiatan
             $jumlahPesertaWusTotal += periksawus::where('kegiatanposyandu_w_u_s_id', $kegiatan->id)->count();
         }
 
@@ -149,23 +141,20 @@ class KegiatanPosyanduController extends Controller
             ->get();
 
         foreach ($kegiatanBalitaBulanIni as $kegiatan) {
-            // Menghitung jumlah WUS yang terdaftar dalam periksawuses untuk setiap kegiatan
             $jumlahPesertaBalitaTotal += PeriksaBalita::where('kegiatanposyandu_balita_id', $kegiatan->id)->count();
         }
 
         $jumlahPesertaTotal = $jumlahPesertaWusTotal + $jumlahPesertaBalitaTotal;
 
-        // return response()->json($jumlahPesertaTotal);
         return response()->json(compact('jumlahPesertaTotal', 'targetpeserta'));
     }
 
     public function getPesertabulanan($id)
     {
-        $currentYear = Carbon::now()->year; // Mendapatkan tahun saat ini
+        $currentYear = Carbon::now()->year;
         $data = [];
 
         for ($month = 1; $month <= 12; $month++) {
-            // Hitung kegiatan WUS selesai untuk setiap bulan
             $kegiatanwusselesai = KegiatanPosyandu::where('posyandu_id', $id)
                 ->where('status_kegiatan', 'selesai')
                 ->where('tipe_kegiatan', 'WUS')
@@ -187,8 +176,6 @@ class KegiatanPosyanduController extends Controller
             foreach ($kegiatanWusBulanIni as $kegiatan) {
                 $jumlahPesertaWusTotal += PeriksaWus::where('kegiatanposyandu_w_u_s_id', $kegiatan->id)->count();
             }
-
-            // Hitung kegiatan Balita selesai untuk setiap bulan
             $kegiatanbalitaselesai = KegiatanPosyandu::where('posyandu_id', $id)
                 ->where('status_kegiatan', 'selesai')
                 ->where('tipe_kegiatan', 'Balita')
@@ -210,8 +197,6 @@ class KegiatanPosyanduController extends Controller
             foreach ($kegiatanBalitaBulanIni as $kegiatan) {
                 $jumlahPesertaBalitaTotal += PeriksaBalita::where('kegiatanposyandu_balita_id', $kegiatan->id)->count();
             }
-
-            // Simpan data tiap bulan ke dalam array
             $data[] = [
                 'bulan' => $month,
                 'target_peserta_wus' => $targetpesertawus,
@@ -220,8 +205,6 @@ class KegiatanPosyanduController extends Controller
                 'real_peserta_balita' => $jumlahPesertaBalitaTotal,
             ];
         }
-
-        // Kembalikan data sebagai JSON
         return response()->json($data);
     }
 }

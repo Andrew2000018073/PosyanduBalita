@@ -288,7 +288,7 @@ export default {
                 desa: "",
                 alamat_lengkap: "",
             },
-            series: [], // Data untuk ditampilkan di chart
+            series: [], // Data untuk chart
             chartOptions: {
                 chart: {
                     type: "bar",
@@ -312,7 +312,7 @@ export default {
                 plotOptions: {
                     bar: {
                         dataLabels: {
-                            position: "top", // Posisi label data
+                            position: "top",
                         },
                     },
                 },
@@ -340,7 +340,6 @@ export default {
                     show: false,
                 },
             },
-            // Data and options for the Line chart
             lineKekSeries: [],
             lineKekChartOptions: {
                 chart: {
@@ -366,7 +365,7 @@ export default {
                 },
                 markers: { size: 1 },
                 xaxis: {
-                    categories: [], // Initially empty
+                    categories: [],
                     title: { text: "Month" },
                 },
                 yaxis: {
@@ -386,36 +385,29 @@ export default {
 
     methods: {
         exportData() {
-            const idPosyandu = this.$route.params.id; // Asumsi idPosyandu dari route
+            const idPosyandu = this.$route.params.id;
             const url = window.url + `api/export/posyandu/${idPosyandu}?tahun=${this.selectedYear}`;
-            window.location.href = url; // Redirect ke endpoint download
+            window.location.href = url;
         },
         async checkRole() {
             try {
-                const token = localStorage.getItem('token'); // Ambil token dari localStorage
+                const token = localStorage.getItem('token');
 
                 const response = await axios.get(window.url + 'api/user/roles', {
                     headers: {
-                        Authorization: `Bearer ${token}` // Tambahkan token ke header
+                        Authorization: `Bearer ${token}`
                     }
                 });
 
-                const roles = response.data.roles; // Dapatkan role dari response
-                const permissions = response.data.permissions; // Dapatkan permissions
+                const roles = response.data.roles;
+                const permissions = response.data.permissions;
 
-                // console.log('Roles:', roles);
-                // console.log('Permissions:', permissions);
-
-                // Contoh penggunaan role
                 if (roles.includes('koordinator')) {
-                    // console.log('User adalah Koordinator');
-                    this.isKoordinator = true; // Set state untuk role koordinator
+                    this.isKoordinator = true;
                 } else if (roles.includes('ketua kader')) {
-                    // console.log('User adalah Ketua Kader');
-                    this.isketuakader = true; // Set state untuk role ketua kader
+                    this.isketuakader = true;
                 } else if (roles.includes('kader')) {
-                    // console.log('User adalah Kader');
-                    this.iskader = true; // Set state untuk role kader
+                    this.iskader = true;
                 }
             } catch (error) {
                 console.error('Gagal memeriksa role:', error.response?.data || error.message);
@@ -426,7 +418,7 @@ export default {
             axios
                 .get(window.url + "api/detail-posyandu/" + id)
                 .then((response) => {
-                    this.taskData = response.data; // Store the received data in taskData
+                    this.taskData = response.data;
                 })
                 .catch((error) => {
                     console.error("Error fetching data:", error);
@@ -521,16 +513,14 @@ export default {
                     this.$route.params.id
                 )
                 .then((response) => {
-                    const banyakPeserta = response.data; // Store fetched data
-
-                    // Prepare data for the chart
+                    const banyakPeserta = response.data;
                     this.series = [
                         {
                             name: "Realisasi Peserta WUS",
                             data: banyakPeserta.map((item) => ({
                                 x: this.chartOptions.xaxis.categories[
                                     item.bulan - 1
-                                ], // Menggunakan nama bulan
+                                ],
                                 y: item.real_peserta_wus,
                                 goals: [
                                     {
@@ -547,7 +537,7 @@ export default {
                             data: banyakPeserta.map((item) => ({
                                 x: this.chartOptions.xaxis.categories[
                                     item.bulan - 1
-                                ], // Menggunakan nama bulan
+                                ],
                                 y: item.real_peserta_balita,
                                 goals: [
                                     {
@@ -573,12 +563,10 @@ export default {
                     let kek = 0;
                     let normal = 0;
 
-                    // console.log("Data WUS:", this.bandingkek); // Log data yang diterima
-
                     this.bandingkek.forEach((item) => {
                         console.log(
                             `WUS ID: ${item.wus_id}, Lila Periksa: ${item.lila_periksa}`
-                        ); // Log untuk setiap item
+                        );
                         if (item.lila_periksa >= 23.5) {
                             normal += 1;
                         } else if (item.lila_periksa < 23.5) {
@@ -611,8 +599,6 @@ export default {
                         normalData.push(item.Normal);
                         months.push(item.month);
                     });
-
-                    // Reverse the data arrays
                     const reversedKekData = kekData.reverse();
                     const reversedNormalData = normalData.reverse();
                     const reversedMonths = months.reverse();
@@ -621,12 +607,8 @@ export default {
                         { name: "KEK", data: reversedKekData },
                         { name: "Normal", data: reversedNormalData },
                     ];
-
-                    // Update the chart options
                     this.lineKekChartOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
-                        // console.log("Chart Ref:", this.$refs.lineKekChart); // Cek apakah ref chart ada
                         if (this.$refs.lineKekChart) {
                             this.$refs.lineKekChart.updateOptions(
                                 this.lineKekChartOptions
@@ -674,9 +656,7 @@ export default {
     table td,
     table th {
         padding: 4px 6px;
-        /* Atur padding sel agar lebih kecil */
         font-size: 12px;
-        /* Perkecil ukuran font */
     }
 
     .table-header {

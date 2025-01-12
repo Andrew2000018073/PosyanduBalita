@@ -19,37 +19,28 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
 {
     protected $bulan;
     protected $idPosyandu;
-    protected $tahun; // Deklarasi properti $tahun
+    protected $tahun;
 
     public function __construct($idPosyandu,  $tahun)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
         $this->tahun = $tahun;
     }
 
 
 
 
-    /**
-     * Fungsi map bisa dikosongkan karena data akan diproses di registerEvents.
-     */
     public function map($posyandu): array
     {
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
 
     public function registerEvents(): array
     {
@@ -59,9 +50,7 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                 $posyandu = Posyandu::with(['wus.pus.bayi', 'wus.periksawus.Kegiatanposyandu' => function ($query) {
                     $query->whereYear(DB::raw("STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, '%d-%m-%Y')"), $this->tahun);
                 }])->find($this->idPosyandu);
-                // dd($posyandu->toArray());
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu);
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -71,7 +60,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A9');
                 $sheet->setCellValue('A8', 'NO');
                 $sheet->mergeCells('B8:B9');
@@ -99,45 +87,40 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                 $sheet->setCellValue('M9', 'IBU HAMIL, MELAHIRKAN, NIFAS');
                 $sheet->mergeCells('N8:P8');
                 $sheet->setCellValue('N8', 'JUMLAH PETUGAS HADIR');
-                $sheet->setCellValue('N9', 'KADER POSYANDU'); //Kosongkan
-                $sheet->setCellValue('O9', 'PLKB'); //Kosongkan
-                $sheet->setCellValue('P9', 'MEDIS DAN PARAMEDIS'); //Kosongkan
+                $sheet->setCellValue('N9', 'KADER POSYANDU');
+                $sheet->setCellValue('O9', 'PLKB');
+                $sheet->setCellValue('P9', 'MEDIS DAN PARAMEDIS');
                 $sheet->mergeCells('Q8:Q9');
-                $sheet->setCellValue('Q8', 'KET'); //Kosongkan
+                $sheet->setCellValue('Q8', 'KET');
 
-                // Style Heading
                 $sheet->getStyle('A8:Q9')->getFont()->setBold(true);
                 $sheet->getStyle('A8:Q9')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A8:Q9')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                // Data Tabel
-                $bulanSekarang = date('n'); // Ambil bulan sekarang (1-12)
-                $row = 10; // Baris awal untuk data
+                $bulanSekarang = date('n');
+                $row = 10;
 
                 for ($bulan = 1; $bulan <= $bulanSekarang; $bulan++) {
-                    $sheet->setCellValue("A{$row}", $bulan); // NO
-                    $sheet->setCellValue("B{$row}", date("F", mktime(0, 0, 0, $bulan, 10))); // Bulan (nama bulan)
+                    $sheet->setCellValue("A{$row}", $bulan);
+                    $sheet->setCellValue("B{$row}", date("F", mktime(0, 0, 0, $bulan, 10)));
 
-                    // Filter kegiatan posyandu berdasarkan bulan
                     $kegiatanBulan = $posyandu->wus->pluck('periksawus')
                         ->flatten()
                         ->filter(function ($periksa) use ($bulan) {
                             return date('m', strtotime($periksa->Kegiatanposyandu->tgl_kegiatan)) == sprintf('%02d', $bulan);
                         });
 
-                    // WUS
                     $wusPus = $kegiatanBulan->where('statusperiksa', 'Tidak hamil & Tidak menyusui')
                         ->merge($kegiatanBulan->where('statusperiksa', 'Nifas'))->count();
                     $wusHamil = $kegiatanBulan->where('statusperiksa', 'Hamil')->count();
                     $wusMenyusui = $kegiatanBulan->where('statusperiksa', 'Tidak hamil & Menyusui')->count();
                     $totalWus = $wusPus + $wusHamil + $wusMenyusui + $kegiatanBulan->where('statusperiksa', 'Tidak menikah')->count();
 
-                    $sheet->setCellValue("G{$row}", $totalWus); // WUS
-                    $sheet->setCellValue("H{$row}", $wusPus); // PUS
-                    $sheet->setCellValue("I{$row}", $wusHamil); // HAMIL
-                    $sheet->setCellValue("J{$row}", $wusMenyusui); // MENYUSUI
+                    $sheet->setCellValue("G{$row}", $totalWus);
+                    $sheet->setCellValue("H{$row}", $wusPus);
+                    $sheet->setCellValue("I{$row}", $wusHamil);
+                    $sheet->setCellValue("J{$row}", $wusMenyusui);
 
-                    // Ambil data bayi berdasarkan bulan
                     $bayiBulan = $posyandu->wus->pluck('pus.bayi')
                         ->flatten()
                         ->filter(function ($bayi) use ($bulan) {
@@ -145,7 +128,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                                 && date('m', strtotime($bayi->tanggal_lahir)) <= sprintf('%02d', $bulan);
                         });
 
-                    // Hitung umur dalam bulan dan tambahkan ke objek bayi
                     $bayiBulan->transform(function ($bayi) {
                         $tanggalLahir = Carbon::parse($bayi->tanggal_lahir);
                         $umurDalamBulan = $tanggalLahir->diffInMonths(Carbon::now());
@@ -153,7 +135,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                         return $bayi;
                     });
 
-                    // Simpan nilai awal bayi 1-5 tahun
                     $bayi1_5LK_awal = $bayiBulan->filter(function ($bayi) {
                         return $bayi->jenis_kelamin == 'Laki-laki' && $bayi->umurDalamBulan > 12 && $bayi->umurDalamBulan <= 60;
                     })->count();
@@ -162,7 +143,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                         return $bayi->jenis_kelamin == 'Perempuan' && $bayi->umurDalamBulan > 12 && $bayi->umurDalamBulan <= 60;
                     })->count();
 
-                    // Hitung bayi 0-12 bulan
                     $bayi0_12LK = $bayiBulan->filter(function ($bayi) {
                         return $bayi->jenis_kelamin == 'Laki-laki' && $bayi->umurDalamBulan <= 12;
                     })->count();
@@ -171,7 +151,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                         return $bayi->jenis_kelamin == 'Perempuan' && $bayi->umurDalamBulan <= 12;
                     })->count();
 
-                    // Hitung ulang bayi 1-5 tahun (setelah validasi)
                     $bayi1_5LK = $bayiBulan->filter(function ($bayi) {
                         return $bayi->jenis_kelamin == 'Laki-laki' && $bayi->umurDalamBulan > 12 && $bayi->umurDalamBulan <= 60;
                     })->count();
@@ -180,7 +159,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                         return $bayi->jenis_kelamin == 'Perempuan' && $bayi->umurDalamBulan > 12 && $bayi->umurDalamBulan <= 60;
                     })->count();
 
-                    // Penyesuaian jika terjadi pengurangan
                     if ($bayi1_5LK < $bayi1_5LK_awal) {
                         $selisih = $bayi1_5LK_awal - $bayi1_5LK;
                         $bayi0_12LK += $selisih;
@@ -191,24 +169,23 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                         $bayi0_12PR += $selisih;
                     }
 
-                    $sheet->setCellValue("C{$row}", $bayi0_12LK); // LK 0-12 BULAN
-                    $sheet->setCellValue("D{$row}", $bayi0_12PR); // PR 0-12 BULAN
-                    $sheet->setCellValue("E{$row}", $bayi1_5LK); // LK 1-5 TAHUN
-                    $sheet->setCellValue("F{$row}", $bayi1_5PR); // PR 1-5 TAHUN
+                    $sheet->setCellValue("C{$row}", $bayi0_12LK);
+                    $sheet->setCellValue("D{$row}", $bayi0_12PR);
+                    $sheet->setCellValue("E{$row}", $bayi1_5LK);
+                    $sheet->setCellValue("F{$row}", $bayi1_5PR);
 
-                    $sheet->setCellValue("K{$row}", ''); // JUMLAH BAYI LAHIR (Sementara dikosongkan)
-                    $sheet->setCellValue("L{$row}", ''); // JUMLAH BAYI WAFAT (Sementara dikosongkan)
-                    $sheet->setCellValue("M{$row}", ''); // JUMLAH KEMATIAN IBU (Kosong)
-                    $sheet->setCellValue("N{$row}", ''); // KADER POSYANDU (Kosong)
-                    $sheet->setCellValue("O{$row}", ''); // PLKB (Kosong)
-                    $sheet->setCellValue("P{$row}", ''); // MEDIS DAN PARAMEDIS (Kosong)
-                    $sheet->setCellValue("Q{$row}", ''); // KETERANGAN (Kosong)
+                    $sheet->setCellValue("K{$row}", '');
+                    $sheet->setCellValue("L{$row}", '');
+                    $sheet->setCellValue("M{$row}", '');
+                    $sheet->setCellValue("N{$row}", '');
+                    $sheet->setCellValue("O{$row}", '');
+                    $sheet->setCellValue("P{$row}", '');
+                    $sheet->setCellValue("Q{$row}", '');
 
                     $row++;
                 }
 
 
-                // Border untuk data
                 $sheet->getStyle("A10:Q" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(30);
@@ -217,8 +194,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
                 $sheet->getColumnDimension("F")->setWidth(20);
                 $sheet->getColumnDimension("G")->setWidth(20);
                 $sheet->getColumnDimension("H")->setWidth(30);
-                // dd($bayiBulan);
-                // dd($bulan);
             },
         ];
     }
@@ -229,6 +204,6 @@ class RangkumanPosyandu implements WithHeadings, WithMapping, WithEvents, WithTi
 
     public function title(): string
     {
-        return 'Form 5'; // Nama worksheet untuk Sheet 1
+        return 'Form 5';
     }
 }

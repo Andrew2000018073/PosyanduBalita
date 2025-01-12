@@ -335,7 +335,6 @@ export default {
             filters: {
                 posyandu_id: "",
             },
-            // Data and options for the Line chart
             lineKekSeries: [],
             lineKekChartOptions: {
                 chart: {
@@ -365,7 +364,7 @@ export default {
                 },
                 markers: { size: 1 },
                 xaxis: {
-                    categories: [], // Initially empty
+                    categories: [],
                     title: { text: "Month" },
                 },
                 yaxis: {
@@ -380,7 +379,6 @@ export default {
                     offsetX: -5,
                 },
             },
-            // Data and options for the Pie chart
             pieSeries: [0, 0, 0, 0, 0],
             pieStatusOptions: {
                 chart: {
@@ -491,7 +489,7 @@ export default {
                 dataLabels: { enabled: true },
                 stroke: {
                     curve: "smooth",
-                    connectNulls: true, // Menambahkan connectNulls
+                    connectNulls: true,
                 },
                 grid: {
                     borderColor: "#e7e7e7",
@@ -499,7 +497,7 @@ export default {
                 },
                 markers: { size: 1 },
                 xaxis: {
-                    categories: [], // Kosong awalnya
+                    categories: [],
                     title: { text: "Month" },
                 },
                 yaxis: {
@@ -550,8 +548,6 @@ export default {
                     const sistol = [];
                     const tinggi_fundus = [];
                     const months = [];
-
-                    // Ubah nilai null menjadi 0 dan tambahkan ke array masing-masing
                     response.data.forEach((item) => {
                         lila_periksa.push(item.lila_periksa ?? 0);
                         lingkarperut_periksa.push(
@@ -562,8 +558,6 @@ export default {
                         tinggi_fundus.push(item.tinggi_fundus ?? 0);
                         months.push(item.month);
                     });
-
-                    // Balik data agar urutan bulan benar
                     const reversedLila = lila_periksa.reverse();
                     const reversedLingkarPerut = lingkarperut_periksa.reverse();
                     const reversedDiastol = diastol.reverse();
@@ -598,7 +592,6 @@ export default {
                 });
         },
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -609,8 +602,8 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.tasks = response.data; // Simpan data ke properti tasks
-                    this.initializeSelect2(); // Initialize select2 after data is loaded
+                    this.tasks = response.data;
+                    this.initializeSelect2();
                 })
                 .catch((errors) => {
                     console.log(errors); // Tangani kesalahan jika ada
@@ -618,14 +611,11 @@ export default {
         },
         initializeSelect2() {
             const vm = this;
-
-            // Check if Select2 is already initialized
             if ($.fn.select2) {
                 if ($("#my-select").data("select2")) {
                     $("#my-select").select2("destroy");
                 }
             }
-
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
@@ -633,19 +623,16 @@ export default {
                     allowClear: true,
                 })
                 .on("change", function () {
-                    vm.taskData.posyandus_id = $(this).val(); // Update model Vue saat Select2 berubah
+                    vm.taskData.posyandus_id = $(this).val();
                     console.log(vm.taskData.posyandus_id);
                 });
         },
 
         filterposyandu() {
             const vm = this;
-
-            // Check if Select2 is already initialized
             if ($.fn.select2 && $("#filter-posyandu").data("select2")) {
                 $("#filter-posyandu").select2("destroy");
             }
-
             $("#filter-posyandu")
                 .select2({
                     dropdownAutoWidth: true,
@@ -656,12 +643,8 @@ export default {
         },
 
         getAge(dateString) {
-            // Split the date string by '-'
             const [day, month, year] = dateString.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
-
             const today = new Date();
             let age = today.getFullYear() - birthDate.getFullYear();
             const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -678,8 +661,6 @@ export default {
                 .get(window.url + "api/getWusStatus")
                 .then((response) => {
                     this.status = response.data;
-
-                    // Map response data to pie chart series
                     const {
                         tdmenikah,
                         hamil,
@@ -754,8 +735,6 @@ export default {
                     const sistol = [];
                     const tinggi_fundus = [];
                     const months = [];
-
-                    // Ubah nilai null menjadi 0 dan tambahkan ke array masing-masing
                     response.data.forEach((item) => {
                         lila_periksa.push(item.lila_periksa ?? 0);
                         lingkarperut_periksa.push(
@@ -766,15 +745,12 @@ export default {
                         tinggi_fundus.push(item.tinggi_fundus ?? 0);
                         months.push(item.month);
                     });
-
-                    // Balik data agar urutan bulan benar
                     const reversedLila = lila_periksa.reverse();
                     const reversedLingkarPerut = lingkarperut_periksa.reverse();
                     const reversedDiastol = diastol.reverse();
                     const reversedSistol = sistol.reverse();
                     const reversedTinggiFundus = tinggi_fundus.reverse();
                     const reversedMonths = months.reverse();
-
                     this.lineperiksaSeries = [
                         { name: "Lingkar lengan", data: reversedLila },
                         { name: "Lingkar perut", data: reversedLingkarPerut },
@@ -782,9 +758,7 @@ export default {
                         { name: "Sistol", data: reversedSistol },
                         { name: "Tinggi fundus", data: reversedTinggiFundus },
                     ];
-
                     this.lineperiksaOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
                         if (this.$refs.lineperiksaChart) {
                             this.$refs.lineperiksaChart.updateOptions(
@@ -818,7 +792,6 @@ export default {
                             this.modalkek.push(item);
                         }
                     });
-                    // console.log('Isi modal:' + this.modalkek);
                     this.pieKEKSeries = [kek, normal];
                     this.reinitializeDataModal(this.modalkek);
                 })
@@ -857,8 +830,6 @@ export default {
                 .get(window.url + "api/getWusStatusPos/" + $id)
                 .then((response) => {
                     this.status = response.data;
-
-                    // Map response data to pie chart series
                     const {
                         tdmenikah,
                         hamil,
@@ -911,8 +882,6 @@ export default {
                         normalData.push(item.Normal);
                         months.push(item.month);
                     });
-
-                    // Reverse the data arrays
                     const reversedKekData = kekData.reverse();
                     const reversedNormalData = normalData.reverse();
                     const reversedMonths = months.reverse();
@@ -921,12 +890,8 @@ export default {
                         { name: "KEK", data: reversedKekData },
                         { name: "Normal", data: reversedNormalData },
                     ];
-
-                    // Update the chart options
                     this.lineKekChartOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
-                        // console.log("Chart Ref:", this.$refs.lineKekChart); // Cek apakah ref chart ada
                         if (this.$refs.lineKekChart) {
                             this.$refs.lineKekChart.updateOptions(
                                 this.lineKekChartOptions
@@ -945,28 +910,21 @@ export default {
                     const kekData = [];
                     const normalData = [];
                     const months = [];
-
                     response.data.forEach((item) => {
                         kekData.push(item.KEK);
                         normalData.push(item.Normal);
                         months.push(item.month);
                     });
-
-                    // Reverse the data arrays
                     const reversedKekData = kekData.reverse();
                     const reversedNormalData = normalData.reverse();
                     const reversedMonths = months.reverse();
-
                     this.lineKekSeries = [
                         { name: "KEK", data: reversedKekData },
                         { name: "Normal", data: reversedNormalData },
                     ];
-
-                    // Update the chart options
                     this.lineKekChartOptions.xaxis.categories = reversedMonths;
-
                     this.$nextTick(() => {
-                        console.log("Chart Ref:", this.$refs.lineKekChart); // Cek apakah ref chart ada
+                        console.log("Chart Ref:", this.$refs.lineKekChart);
                         if (this.$refs.lineKekChart) {
                             this.$refs.lineKekChart.updateOptions(
                                 this.lineKekChartOptions
@@ -978,11 +936,9 @@ export default {
                     console.log(errors);
                 });
         },
-
         closeModal() {
             $("#taskModal").modal("hide");
         },
-
         kasihPosyandu() {
             axios
                 .get(window.url + "api/getPosyandu")
@@ -1018,22 +974,20 @@ export default {
             axios
                 .get(window.url + "api/getWus")
                 .then((response) => {
-                    this.wuses = response.data; // Set data
-                    this.reinitializeDataTable(this.wuses); // Pass the fetched data
-                    // console.log("Fetched Wus:", this.wuses);
+                    this.wuses = response.data;
+                    this.reinitializeDataTable(this.wuses);
                     this.getPosyandu();
                 })
                 .catch((errors) => {
                     console.log(errors);
                 });
         },
-
         getWusPosyandu(posyanduId) {
             axios
                 .get(window.url + "api/getWusPosyandu/" + posyanduId)
                 .then((response) => {
-                    this.wuses = response.data; // Set data
-                    this.reinitializeDataTable(this.wuses); // Pass the fetched data
+                    this.wuses = response.data;
+                    this.reinitializeDataTable(this.wuses);
                     console.log(this.wuses);
                     this.getPosyandu();
                 })
@@ -1041,51 +995,33 @@ export default {
                     console.log(errors);
                 });
         },
-
         reinitializeDataModal(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablekek");
-
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataModalColumns(),
             });
-
-            // Attach event listeners
         },
-
         reinitializeDataTable(data) {
             const plainData = JSON.parse(JSON.stringify(data));
-
             const table = $("#tablewus");
-
-            // Clear and destroy existing DataTable if present
             if ($.fn.DataTable.isDataTable(table)) {
                 table.DataTable().clear().destroy();
             }
-
-            // Initialize DataTable
             table.DataTable({
                 data: plainData,
                 processing: true,
                 serverSide: false,
                 columns: this.getDataTableColumns(),
             });
-
-            // Attach event listeners
             this.attachEventListeners();
         },
-
         getDataTableColumns() {
             return [
                 { data: "nama", name: "nama" },
@@ -1208,14 +1144,14 @@ export default {
             this.$nextTick(() => {
                 $("#taskModal").modal("show");
                 $("#taskModal").on("shown.bs.modal", () => {
-                    this.initializeSelect2(); // Pastikan dipanggil setelah modal ditampilkan
+                    this.initializeSelect2();
                 });
             });
         },
 
         updateTask() {
             this.validateTask();
-            console.log("Updating task with ID:", this.taskData.wus_id); // Make sure the ID is set
+            console.log("Updating task with ID:", this.taskData.wus_id);
 
             if (this.isTaskValid()) {
                 axios

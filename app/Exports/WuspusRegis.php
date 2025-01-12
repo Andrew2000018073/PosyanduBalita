@@ -16,34 +16,25 @@ class WuspusRegis implements WithHeadings, WithMapping, WithEvents, WithTitle
 {
     protected $bulan;
     protected $idPosyandu;
-    protected $tahun; // Deklarasi properti $tahun
+    protected $tahun;
     public function __construct($idPosyandu,  $tahun)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
         $this->tahun = $tahun;
     }
 
 
-    /**
-     * Fungsi map bisa dikosongkan karena data akan diproses di registerEvents.
-     */
     public function map($posyandu): array
     {
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
     public function registerEvents(): array
     {
         return [
@@ -52,18 +43,16 @@ class WuspusRegis implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $posyandu = Posyandu::with([
                     'wus.pus.alatKontrasepsis' => function ($query) {
                         $query->withPivot(['tanggal_pertama_pakai'])
-                            ->whereYear(DB::raw("STR_TO_DATE(pivot_kontrasepsi_puses.tanggal_pertama_pakai, '%d-%m-%Y')"), $this->tahun); // Filter berdasarkan tahun
+                            ->whereYear(DB::raw("STR_TO_DATE(pivot_kontrasepsi_puses.tanggal_pertama_pakai, '%d-%m-%Y')"), $this->tahun);
                     }
                 ])->find($this->idPosyandu);
 
 
-                // Judul Utama
                 $sheet->mergeCells('A1:Q1');
                 $sheet->setCellValue('A1', 'REGISTER WUS DAN PUS');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu ?? '-');
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -73,7 +62,6 @@ class WuspusRegis implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A9');
                 $sheet->setCellValue('A8', 'NO');
                 $sheet->mergeCells('B8:B9');
@@ -106,61 +94,51 @@ class WuspusRegis implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('P9', 'TANGGAL / BULAN');
                 $sheet->setCellValue('Q9', 'JENIS KONTRASEPSI');
 
-                // Style Heading
                 $sheet->getStyle('A8:Q9')->getFont()->setBold(true);
                 $sheet->getStyle('A8:Q9')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A8:Q9')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                // Data Tabel
                 $row = 10;
                 foreach ($posyandu->wus as $index => $wus) {
                     $pus = $wus->pus ?? null;
                     $periksaWus = $wus->periksawus ?? collect();
 
-                    // Ambil alat kontrasepsi yang sedang dipakai
                     $kontrasepsiSedangDipakai = $pus ? $pus->alatKontrasepsis()
                         ->wherePivot('status', 'Sedang dipakai')
                         ->first() : null;
 
-                    // Ambil alat kontrasepsi terakhir yang statusnya "Sudah diganti"
                     $kontrasepsiSebelumnya = $pus ? $pus->alatKontrasepsis()
                         ->wherePivot('status', 'Sudah diganti')
                         ->orderBy('pivot_tanggal_berhenti_pakai', 'desc')
                         ->first() : null;
 
-                    // Set data hanya sekali tanpa perulangan alat kontrasepsi
-                    $sheet->setCellValue("A{$row}", $index + 1); // Nomor
-                    $sheet->setCellValue("B{$row}", $wus->nama ?? '-'); // Nama WUS
-                    $sheet->setCellValue("C{$row}", $wus->getUmur() ?? '-'); // Umur
-                    $sheet->setCellValue("D{$row}", $pus->nama_suami ?? '-'); // Nama Suami
-                    $sheet->setCellValue("E{$row}", '-'); // Kolom kosong
+                    $sheet->setCellValue("A{$row}", $index + 1);
+                    $sheet->setCellValue("B{$row}", $wus->nama ?? '-');
+                    $sheet->setCellValue("C{$row}", $wus->getUmur() ?? '-');
+                    $sheet->setCellValue("D{$row}", $pus->nama_suami ?? '-');
+                    $sheet->setCellValue("E{$row}", '-');
                     $sheet->setCellValue("F{$row}", '');
-                    $sheet->setCellValue("G{$row}", $pus->jumlah_anak_hidup ?? '-'); // Jumlah Anak Hidup
+                    $sheet->setCellValue("G{$row}", $pus->jumlah_anak_hidup ?? '-');
                     $sheet->setCellValue("H{$row}", '');
-                    $sheet->setCellValue("I{$row}", $wus->lila_wus ?? '-'); // LILA WUS
+                    $sheet->setCellValue("I{$row}", $wus->lila_wus ?? '-');
 
-                    // PEMBERIAN IMUNISASI (I - V)
                     for ($i = 1; $i <= 5; $i++) {
                         $imunisasi = $periksaWus->where('imunisasi_kehamilans_kuartal', $i)->first();
-                        $col = chr(76 + $i); // Kolom mulai dari N
+                        $col = chr(76 + $i);
                         $sheet->setCellValue("{$col}{$row}", $imunisasi ? $imunisasi->Kegiatanposyandu->tgl_kegiatan ?? '-' : '-');
                     }
 
-                    // Isi alat kontrasepsi yang sedang dipakai
                     $sheet->setCellValue("O{$row}", $kontrasepsiSedangDipakai->nama ?? '-');
 
-                    // Isi tanggal ganti dari alat sebelumnya
                     $sheet->setCellValue("P{$row}", $kontrasepsiSebelumnya->pivot->tanggal_berhenti_pakai ?? '-');
 
-                    // Isi jenis alat kontrasepsi sebelumnya
                     $sheet->setCellValue("Q{$row}", $kontrasepsiSebelumnya->nama ?? '-');
 
-                    $row++; // Pindah ke baris berikutnya
+                    $row++;
                 }
 
 
 
-                // Border untuk data
                 $sheet->getStyle("A10:Q" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(20);
@@ -181,6 +159,6 @@ class WuspusRegis implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function title(): string
     {
-        return 'Form 3'; // Nama worksheet untuk Sheet 1
+        return 'Form 3';
     }
 }

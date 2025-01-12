@@ -359,7 +359,6 @@
                 <div class="card-footer text-center" v-show="stats.status === 'belum selesai'">
                     <div class="row">
                         <div class="col">
-                            <!-- <router-link to="/tambah-kegiatan-wus" class="btn btn-success">Tambah Peserta</router-link> -->
                             <button class="btn btn-success" @click="storeIdAndNavigate">
                                 Tambah Peserta
                             </button>
@@ -424,7 +423,6 @@ export default {
                 lingkarperut_periksa: false,
                 tensi: false,
                 tinggi_fundus: false,
-                // hasil_penimbangan: false,
                 keluhan: false,
                 statuswus: false,
                 diastol: false,
@@ -435,30 +433,29 @@ export default {
     methods: {
         async checkRole() {
             try {
-                const token = localStorage.getItem('token'); // Ambil token dari localStorage
+                const token = localStorage.getItem('token');
 
                 const response = await axios.get(window.url + 'api/user/roles', {
                     headers: {
-                        Authorization: `Bearer ${token}` // Tambahkan token ke header
+                        Authorization: `Bearer ${token}`
                     }
                 });
 
-                const roles = response.data.roles; // Dapatkan role dari response
-                const permissions = response.data.permissions; // Dapatkan permissions
+                const roles = response.data.roles;
+                const permissions = response.data.permissions;
 
                 console.log('Roles:', roles);
                 console.log('Permissions:', permissions);
 
-                // Contoh penggunaan role
                 if (roles.includes('koordinator')) {
                     console.log('User adalah Koordinator');
-                    this.isKoordinator = true; // Set state untuk role koordinator
+                    this.isKoordinator = true;
                 } else if (roles.includes('ketua kader')) {
                     console.log('User adalah Ketua Kader');
-                    this.isketuakader = true; // Set state untuk role ketua kader
+                    this.isketuakader = true;
                 } else if (roles.includes('kader')) {
                     console.log('User adalah Kader');
-                    this.iskader = true; // Set state untuk role kader
+                    this.iskader = true;
                 }
             } catch (error) {
                 console.error('Gagal memeriksa role:', error.response?.data || error.message);
@@ -487,21 +484,18 @@ export default {
             }).then(this.$router.push("/"));
         },
         storeIdAndNavigate() {
-            const kegiatanId = this.$route.params.id; // Get the ID from the route parameters
-            console.log("Storing ID:", kegiatanId); // Log the ID to ensure it’s correct
-
-            // Check if kegiatanId is defined before storing
+            const kegiatanId = this.$route.params.id;
+            console.log("Storing ID:", kegiatanId);
             if (kegiatanId) {
-                localStorage.setItem("PassedId", kegiatanId); // Store the ID
+                localStorage.setItem("PassedId", kegiatanId);
                 console.log(
                     "Current localStorage value for PassedId:",
                     localStorage.getItem("PassedId")
-                ); // Verify it's stored correctly
+                );
             } else {
-                console.error("No ID found to store."); // Error handling if ID is not found
+                console.error("No ID found to store.");
             }
-
-            this.$router.push({ name: "tambah-peserta-wus" }); // Navigate to the next page
+            this.$router.push({ name: "tambah-peserta-wus" });
         },
         deleteTask() {
             axios
@@ -527,9 +521,7 @@ export default {
                 .then(this.showAlert());
         },
         updateTask() {
-            this.taskData.kegiatanposyandu_w_u_s_id = this.taskData.id; // Use this.kegiatanId
-
-            // Validate fields
+            this.taskData.kegiatanposyandu_w_u_s_id = this.taskData.id;
             this.taskErrors.wus_id = !this.taskData.wus_id;
             this.taskErrors.diastol = !this.taskData.diastol;
             this.taskErrors.sistol = !this.taskData.sistol;
@@ -537,7 +529,6 @@ export default {
                 !this.taskData.lingkarperut_periksa;
             this.taskErrors.lila_periksa = !this.taskData.lila_periksa;
             this.taskErrors.keluhan = !this.taskData.keluhan;
-
             if (
                 !this.taskErrors.wus_id &&
                 !this.taskErrors.lila_periksa &&
@@ -583,13 +574,10 @@ export default {
             this.editMode = true;
             this.deleteMode = false;
             this.selesaiMode = false;
-            this.taskData = { ...task }; // Set taskData before making the API call
-
-            // Now make the axios call
+            this.taskData = { ...task };
             axios
                 .get(window.url + "api/getNamaWus/" + this.taskData.id)
                 .then((response) => {
-                    // Check if response.data.wus is defined before accessing it
                     if (response.data && response.data.wus) {
                         this.taskData.statuswus = response.data.wus.statuswus;
                         console.log(this.taskData.statuswus);
@@ -631,7 +619,7 @@ export default {
                 .then((response) => {
                     if (response.data.length > 0) {
                         this.stats.status = response.data[0].status_kegiatan;
-                        console.log("Status:", this.stats.status); // Debugging line
+                        console.log("Status:", this.stats.status);
                     } else {
                         console.log("No data found");
                     }
@@ -710,7 +698,6 @@ export default {
         font-size: 15px;
     }
 
-
     table thead th:nth-child(3),
     table tbody td:nth-child(3) {
         display: none;
@@ -721,18 +708,13 @@ export default {
         display: none;
     }
 
-
-
     table td,
     table th {
-
         font-size: 11px;
-
     }
 
     .table-header {
         background-color: #28a745;
-        /* Hijau sesuai tema */
         color: white;
         padding: 6px 10px;
         text-align: center;

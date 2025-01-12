@@ -84,7 +84,7 @@ import Swal from 'sweetalert2';
 export default {
     data() {
         return {
-            tasks: [], // Storing tasks from API
+            tasks: [],
             taskData: {
                 wus_id: '',
                 nama_suami: '',
@@ -104,8 +104,6 @@ export default {
             axios.get(window.url + 'api/getWus')
                 .then(response => {
                     this.tasks = response.data;
-
-                    // Reinitialize Select2 after the options have been updated
                     this.$nextTick(() => {
                         this.initializeSelect2();
                     });
@@ -132,13 +130,10 @@ export default {
         },
         initializeSelect2() {
             const vm = this;
-
-            // Initialize Select2 if element is present
             if ($('#my-select').length > 0) {
                 $('#my-select').select2({
                     dropdownAutoWidth: true,
                 }).on('change', function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.wus_id = $(this).val();
                 });
             }
@@ -159,8 +154,6 @@ export default {
                 jumlah_anak_hidup: '',
                 lingkar_perut_suami: '',
             };
-
-            // Reinitialize Select2 after resetting form
             this.$nextTick(() => {
                 this.initializeSelect2();
             });
@@ -170,7 +163,6 @@ export default {
         this.getTasks();
     },
     beforeDestroy() {
-        // Check if Select2 is initialized and then destroy it
         if ($('#my-select').hasClass('select2-hidden-accessible')) {
             $('#my-select').select2('destroy');
         }

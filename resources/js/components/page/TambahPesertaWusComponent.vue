@@ -312,10 +312,10 @@ export default {
             UseImunisasi: false,
             UseVitamin: false,
             hamilbaru: false,
-            wuses: [], // Menyimpan data dari API
+            wuses: [],
             posyandus: [],
             format: "dd-MM-yyyy",
-            kegiatanId: "", // Declare kegiatanId
+            kegiatanId: "",
             taskData: {
                 wus_id: "",
                 vitamin_kuartal: "",
@@ -325,7 +325,6 @@ export default {
                 lila_periksa: "",
                 lingkarperut_periksa: "",
                 tinggi_fundus: "",
-                // hasil_penimbangan: '',
                 keluhan: "",
                 statuswus: "",
                 kehamilan_ke: "",
@@ -341,7 +340,6 @@ export default {
                 lila_periksa: false,
                 lingkarperut_periksa: false,
                 tinggi_fundus: false,
-                // hasil_penimbangan: false,
                 keluhan: false,
                 statuswus: false,
                 diastol: false,
@@ -355,8 +353,8 @@ export default {
         this.getWus();
     },
     created() {
-        this.kegiatanId = localStorage.getItem("PassedId"); // Set kegiatanId from localStorage
-        console.log("ID from localStorage:", this.kegiatanId); // Log the ID
+        this.kegiatanId = localStorage.getItem("PassedId");
+        console.log("ID from localStorage:", this.kegiatanId);
     },
 
     watch: {
@@ -364,12 +362,11 @@ export default {
             handler(newData) {
                 console.log("taskData updated:", newData);
             },
-            deep: true, // Ensure Vue watches nested properties
+            deep: true,
         },
     },
     methods: {
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -403,12 +400,10 @@ export default {
             axios
                 .get(window.url + "api/getKegiatanActive/" + this.kegiatanId)
                 .then((response) => {
-                    this.posyandus = response.data; // Save Posyandu data
-                    // console.log(this.posyandus);
+                    this.posyandus = response.data;
                     this.$nextTick(() => {
-                        this.initializeSelect2(); // Re-initialize select2 after the DOM is updated
+                        this.initializeSelect2();
                     });
-                    // Call getWus after posyandus has been set
                     this.getWus();
                 })
                 .catch((errors) => {
@@ -417,15 +412,14 @@ export default {
         },
 
         getWus() {
-            // Check if posyandus is an array and contains at least one item
             if (Array.isArray(this.posyandus) && this.posyandus.length > 0) {
-                const posyanduId = this.posyandus[0].posyandu_id; // Access the first item’s posyandu_id
+                const posyanduId = this.posyandus[0].posyandu_id;
                 axios
                     .get(window.url + "api/getWusPeserta/" + posyanduId)
                     .then((response) => {
-                        this.wuses = response.data; // Save WUS data
+                        this.wuses = response.data;
                         this.$nextTick(() => {
-                            this.initializeSelect2(); // Re-initialize select2 after the DOM is updated
+                            this.initializeSelect2();
                         });
                     })
                     .catch((errors) => {
@@ -439,21 +433,17 @@ export default {
         },
 
         getData(taskId) {
-            console.log("Fetching data for WUS ID:", taskId); // Check if this runs
+            console.log("Fetching data for WUS ID:", taskId);
 
             axios
                 .get(`${window.url}api/datawus/${taskId}`)
                 .then((response) => {
-                    console.log("Received data:", response.data); // Log the response data
-
-                    // Assuming response.data is an array and you need the first item
+                    console.log("Received data:", response.data);
                     if (
                         Array.isArray(response.data) &&
                         response.data.length > 0
                     ) {
                         const data = response.data[response.data.length - 1];
-
-                        // Only update the specific fields in taskData
                         this.taskData.tablettambah_darahs_kuartal =
                             data.tablettambah_darahs_kuartal + 1 || "";
                         if (data.imunisasi_kehamilans_kuartal >= 5) {
@@ -472,7 +462,6 @@ export default {
                     }
                 })
                 .catch((errors) => {
-                    // Only update the specific fields in taskData
                     this.taskData.tablettambah_darahs_kuartal = "";
                     this.taskData.imunisasi_kehamilans_kuartal = "";
                     this.taskData.vitamin_kuartal = "";
@@ -488,20 +477,16 @@ export default {
                     const selectedWusId = $(this).val();
                     vm.taskData.wus_id = selectedWusId;
 
-                    console.log("Selected WUS ID:", selectedWusId); // Check if select2 is working
+                    console.log("Selected WUS ID:", selectedWusId);
 
                     if (selectedWusId) {
-                        vm.getData(selectedWusId); // Fetch data for the selected WUS ID
+                        vm.getData(selectedWusId);
                     }
                 });
         },
 
         sendData() {
-            this.taskData.kegiatanposyandu_w_u_s_id = this.kegiatanId; // Use this.kegiatanId
-
-            // if(this.NormalStatus===true){
-
-            // }
+            this.taskData.kegiatanposyandu_w_u_s_id = this.kegiatanId;
             this.taskErrors.wus_id = !this.taskData.wus_id;
             this.taskErrors.diastol = !this.taskData.diastol;
             this.taskErrors.sistol = !this.taskData.sistol;
@@ -573,7 +558,7 @@ export default {
                         this.showAlert();
                         this.$router.push(
                             "/kegiatan-wus-active/" + this.kegiatanId
-                        ); // Use this.kegiatanId
+                        );
                     })
                     .catch((errors) => {
                         console.log(errors);

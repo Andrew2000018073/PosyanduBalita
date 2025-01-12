@@ -204,7 +204,6 @@
                 <div class="card-footer text-center" v-show="stats.status === 'belum selesai'">
                     <div class="row">
                         <div class="col">
-                            <!-- <router-link to="/tambah-kegiatan-wus" class="btn btn-success">Tambah Peserta</router-link> -->
                             <button class="btn btn-success btn-sm" @click="storeIdAndNavigate">
                                 Tambah Peserta
                             </button>
@@ -257,7 +256,6 @@ export default {
                 kegiatanposyandu_balita_id: false,
                 panjang_badan: false,
                 berat_badan: false,
-                // hasil_penimbangan: false,
                 lingkep_periksa: false,
                 catatan: false,
                 imunisasi_id: false,
@@ -274,21 +272,18 @@ export default {
             }).then(this.$router.push("/"));
         },
         storeIdAndNavigate() {
-            const kegiatanId = this.$route.params.id; // Get the ID from the route parameters
-            console.log("Storing ID:", kegiatanId); // Log the ID to ensure it’s correct
-
-            // Check if kegiatanId is defined before storing
+            const kegiatanId = this.$route.params.id;
+            console.log("Storing ID:", kegiatanId);
             if (kegiatanId) {
-                localStorage.setItem("PassedId", kegiatanId); // Store the ID
+                localStorage.setItem("PassedId", kegiatanId);
                 console.log(
                     "Current localStorage value for PassedId:",
                     localStorage.getItem("PassedId")
-                ); // Verify it's stored correctly
+                );
             } else {
-                console.error("No ID found to store."); // Error handling if ID is not found
+                console.error("No ID found to store.");
             }
-
-            this.$router.push({ name: "tambah-peserta-balita" }); // Navigate to the next page
+            this.$router.push({ name: "tambah-peserta-balita" });
         },
         deleteTask() {
             axios
@@ -309,7 +304,7 @@ export default {
             this.editMode = true;
             this.deleteMode = false;
             this.getImunisasis();
-            this.taskData = { ...task }; // Use spread operator to copy the task data
+            this.taskData = { ...task };
             $("#taskModal").modal("show");
         },
         removeTask(task) {
@@ -349,9 +344,9 @@ export default {
             axios
                 .get(window.url + "api/getImunisasiBayi/")
                 .then((response) => {
-                    this.imunisasis = response.data; // Save WUS data
+                    this.imunisasis = response.data;
                     this.$nextTick(() => {
-                        this.initializemultiSelect2(); // Re-initialize select2 after the DOM is updated
+                        this.initializemultiSelect2();
                     });
                 })
                 .catch((errors) => {
@@ -360,23 +355,18 @@ export default {
         },
         initializemultiSelect2() {
             const vm = this;
-            // Initialize multi select
             $("#my-select-multiple")
                 .select2({
                     dropdownAutoWidth: true,
-                    width: "100%", // Ensure proper dropdown width
+                    width: "100%",
                 })
                 .on("change", function () {
                     const selectedImunisasiId = $(this).val();
-                    vm.taskData.imunisasi_id = selectedImunisasiId; // Update taskData for multiple WUS IDs
+                    vm.taskData.imunisasi_id = selectedImunisasiId;
                     console.log(
                         "Selected Imunisasi  IDs (Multiple):",
                         selectedImunisasiId
                     );
-
-                    // if (selectedBalitasIds && selectedBalitasIds.length > 0) {
-                    //     vm.getData(selectedBalitasIds);  // Fetch data for the selected WUS IDs
-                    // }
                 });
         },
         updateStatus() {
@@ -394,7 +384,7 @@ export default {
                 .then((response) => {
                     if (response.data.length > 0) {
                         this.stats.status = response.data[0].status_kegiatan;
-                        console.log("Status:", this.stats.status); // Debugging line
+                        // console.log("Status:", this.stats.status);
                     } else {
                         console.log("No data found");
                     }
@@ -405,14 +395,13 @@ export default {
         },
         updateTask() {
             const kegiatanId = this.$route.params.id;
-            this.taskData.kegiatanposyandu_balita_id = kegiatanId; // Use this.kegiatanId
+            this.taskData.kegiatanposyandu_balita_id = kegiatanId;
 
-            // Validate fields
+            // Validasi
             this.taskErrors.bayis_id = !this.taskData.bayis_id;
             this.taskErrors.lingkep_periksa = !this.taskData.lingkep_periksa;
             this.taskErrors.panjang_badan = !this.taskData.panjang_badan;
             this.taskErrors.berat_badan = !this.taskData.berat_badan;
-            // this.taskErrors.hasil_penimbangan = !this.taskData.hasil_penimbangan;
             this.taskErrors.catatan = !this.taskData.catatan;
 
             if (

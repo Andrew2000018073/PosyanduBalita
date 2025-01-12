@@ -17,9 +17,8 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
 {
     protected $bulan;
     protected $idPosyandu;
-    protected $tahun; // Deklarasi properti $tahun
+    protected $tahun;
 
-    // Fungsi untuk mencari tanggal imunisasi berdasarkan nama imunisasi
     private function getTanggalImunisasi($periksabalita, $namaImunisasi)
     {
         foreach ($periksabalita as $periksa) {
@@ -42,31 +41,22 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function __construct($idPosyandu,  $tahun)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
         $this->tahun = $tahun;
     }
 
 
-    /**
-     * Fungsi map bisa dikosongkan karena data akan diproses di registerEvents.
-     */
     public function map($posyandu): array
     {
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
     public function registerEvents(): array
     {
         return [
@@ -74,22 +64,19 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet = $event->sheet;
                 $posyandu = Posyandu::with([
                     'wus.pus.bayi.PeriksaBalita.Kegiatanposyandu' => function ($query) {
-                        $query->whereYear(DB::raw("STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, '%d-%m-%Y')"), $this->tahun); // Filter berdasarkan tgl_kegiatan
+                        $query->whereYear(DB::raw("STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, '%d-%m-%Y')"), $this->tahun);
                     },
                     'wus.pus.bayi.PeriksaBalita.imunisasi' => function ($query) {
-                        $query->whereYear('imunisasi_balitas.created_at', $this->tahun); // Tetap menggunakan created_at untuk imunisasi
+                        $query->whereYear('imunisasi_balitas.created_at', $this->tahun);
                     },
                 ])->find($this->idPosyandu);
 
-                // dd($posyandu->toArray());
 
 
-                // Judul Utama
                 $sheet->mergeCells('A1:H1');
                 $sheet->setCellValue('A1', 'REGISTER BAYI DAN BALITA');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu);
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -99,7 +86,6 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A10');
                 $sheet->setCellValue('A8', 'NO');
                 $sheet->mergeCells('B8:B10');
@@ -201,7 +187,6 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->mergeCells('AR8:AR10');
                 $sheet->setCellValue('AR8', 'CATATAN');
 
-                // Style Heading
 
 
                 $sheet->getStyle('A8:AR10')->getFont()->setBold(true);
@@ -211,20 +196,19 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $row = 11;
                 foreach ($posyandu->bayis as $index => $bayi) {
 
-                    $sheet->setCellValue("A{$row}", $index + 1); // NO
-                    $sheet->setCellValue("B{$row}", $bayi->namabalita ?? '-'); // Nama Balita/Bayi
-                    $sheet->setCellValue("C{$row}", $bayi->tanggal_lahir ?? '-'); // Tanggal Lahir
-                    $sheet->setCellValue("D{$row}", $bayi->beratbadan_lahir ?? '-'); // Berat Badan Lahir
-                    $sheet->setCellValue("E{$row}", $bayi->pus->nama_suami ?? '-'); // Nama Ayah
-                    $sheet->setCellValue("F{$row}", $bayi->pus->wus->nama ?? '-'); // Nama Ibu
-                    $sheet->setCellValue("G{$row}", $bayi->pus->kelompok_dasawisma ?? '-'); // Kelompok Dasawisma
+                    $sheet->setCellValue("A{$row}", $index + 1);
+                    $sheet->setCellValue("B{$row}", $bayi->namabalita ?? '-');
+                    $sheet->setCellValue("C{$row}", $bayi->tanggal_lahir ?? '-');
+                    $sheet->setCellValue("D{$row}", $bayi->beratbadan_lahir ?? '-');
+                    $sheet->setCellValue("E{$row}", $bayi->pus->nama_suami ?? '-');
+                    $sheet->setCellValue("F{$row}", $bayi->pus->wus->nama ?? '-');
+                    $sheet->setCellValue("G{$row}", $bayi->pus->kelompok_dasawisma ?? '-');
 
-                    // Hasil Penimbangan KG (Jan - Des)
                     $penimbangan = $bayi->periksabalita ?? collect();
 
                     for ($month = 1; $month <= 12; $month++) {
                         $monthString = str_pad($month, 2, '0', STR_PAD_LEFT);
-                        $column = chr(72 + $month - 1); // Mulai dari kolom 'H'
+                        $column = chr(72 + $month - 1);
 
                         $latestCheck = $penimbangan
                             ->filter(fn($p) => date('m', strtotime($p->Kegiatanposyandu->tgl_kegiatan ?? '')) === $monthString)
@@ -238,7 +222,6 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                         }
                     }
 
-                    // Pemberian ASI E1 - E6
                     $sheet->setCellValue("T{$row}", $bayi->periksabalita->firstWhere('pemberian_asi_kuartal', '1') ? 'Ya' : '-');
                     $sheet->setCellValue("U{$row}", $bayi->periksabalita->firstWhere('pemberian_asi_kuartal', '2') ? 'Ya' : '-');
                     $sheet->setCellValue("V{$row}", $bayi->periksabalita->firstWhere('pemberian_asi_kuartal', '3') ? 'Ya' : '-');
@@ -246,13 +229,11 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                     $sheet->setCellValue("X{$row}", $bayi->periksabalita->firstWhere('pemberian_asi_kuartal', '5') ? 'Ya' : '-');
                     $sheet->setCellValue("Y{$row}", $bayi->periksabalita->firstWhere('pemberian_asi_kuartal', '6') ? 'Ya' : '-');
 
-                    // Pelayanan Vitamin A -
                     $sheet->setCellValue("Z{$row}", $this->getTanggalVitamin($bayi->periksabalita, '1'));
                     $sheet->setCellValue("AA{$row}",  $this->getTanggalVitamin($bayi->periksabalita, '2'));
 
 
 
-                    // Gunakan metode getTanggalImunisasi dalam collection()
                     $sheet->setCellValue("AB{$row}", $this->getTanggalImunisasi($bayi->periksabalita, 'ORALIT'));
                     $sheet->setCellValue("AC{$row}", $this->getTanggalImunisasi($bayi->periksabalita, 'HB0'));
                     $sheet->setCellValue("AD{$row}", $this->getTanggalImunisasi($bayi->periksabalita, 'BCG'));
@@ -270,19 +251,16 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
                     $sheet->setCellValue("AP{$row}", $this->getTanggalImunisasi($bayi->periksabalita, 'CAMPAK'));
 
 
-                    // Kosongkan AQ dan AR
                     $sheet->setCellValue("AQ{$row}", '');
                     $sheet->setCellValue("AR{$row}", '');
 
                     $row++;
                 }
 
-                // dd($bayi);
 
 
 
 
-                // Border untuk data
                 $sheet->getStyle("A10:AR" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(30);
@@ -298,6 +276,6 @@ class RegBalita implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function title(): string
     {
-        return 'Form 2'; // Nama worksheet untuk Sheet 1
+        return 'Form 2';
     }
 }

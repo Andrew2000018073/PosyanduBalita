@@ -235,30 +235,29 @@ export default {
     methods: {
         async checkRole() {
             try {
-                const token = localStorage.getItem('token'); // Ambil token dari localStorage
+                const token = localStorage.getItem('token');
 
                 const response = await axios.get(window.url + 'api/user/roles', {
                     headers: {
-                        Authorization: `Bearer ${token}` // Tambahkan token ke header
+                        Authorization: `Bearer ${token}`
                     }
                 });
 
-                const roles = response.data.roles; // Dapatkan role dari response
-                const permissions = response.data.permissions; // Dapatkan permissions
+                const roles = response.data.roles;
+                const permissions = response.data.permissions;
 
                 console.log('Roles:', roles);
                 console.log('Permissions:', permissions);
 
-                // Contoh penggunaan role
                 if (roles.includes('koordinator')) {
                     console.log('User adalah Koordinator');
-                    this.isKoordinator = true; // Set state untuk role koordinator
+                    this.isKoordinator = true;
                 } else if (roles.includes('ketua kader')) {
                     console.log('User adalah Ketua Kader');
-                    this.isketuakader = true; // Set state untuk role ketua kader
+                    this.isketuakader = true;
                 } else if (roles.includes('kader')) {
                     console.log('User adalah Kader');
-                    this.iskader = true; // Set state untuk role kader
+                    this.iskader = true;
                 }
             } catch (error) {
                 console.error('Gagal memeriksa role:', error.response?.data || error.message);
@@ -333,7 +332,6 @@ export default {
         editTask() {
             this.editMode = true;
             this.deleteMode = false;
-            // this.taskData = { ...task }; // Use spread operator to copy the task data
             $("#aksiModal").modal("hide");
             $("#taskModal").modal("show");
         },
@@ -376,20 +374,16 @@ export default {
     table thead th:nth-child(4),
     table tbody td:nth-child(4) {
         display: none;
-        /* Sembunyikan kolom ke-4 */
     }
 
     table td,
     table th {
         padding: 4px 6px;
-        /* Atur padding sel agar lebih kecil */
         font-size: 12px;
-        /* Perkecil ukuran font */
     }
 
     .table-header {
         background-color: #28a745;
-        /* Hijau sesuai tema */
         color: white;
         padding: 6px 10px;
         text-align: center;

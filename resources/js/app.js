@@ -78,7 +78,7 @@ const routes = [
 
 // Konfigurasi Router
 const router = createRouter({
-    history: createWebHistory('/posdua/public/'), // Sesuaikan base URL jika diperlukan
+    history: createWebHistory('/posdua/public/'), // Perbarui sesuai base URL jika diperlukan
     routes,
 });
 
@@ -139,7 +139,7 @@ const app = createApp({
     },
 });
 
-// Gunakan Plugin dan Komponen
+// Plugin dan Komponen
 app.use(router); // Pasang router
 app.use(store); // Pasang Vuex store
 

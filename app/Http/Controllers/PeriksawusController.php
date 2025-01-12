@@ -75,27 +75,17 @@ class PeriksawusController extends Controller
     }
     public function getPesertaWus($id)
     {
-        // Fetch all KegiatanPosyandu with the status 'selesai'
         $kegiatanIds = KegiatanPosyandu::where('status_kegiatan', 'selesai')
-            ->pluck('id');  // Get an array of all IDs with status 'selesai'
-
-        // If no kegiatan with status 'selesai' is found, return a 404 response
+            ->pluck('id');
         if ($kegiatanIds->isEmpty()) {
             return response()->json(['message' => 'No completed kegiatan found'], 404);
         }
-
-        // Fetch PeriksaWus records where 'wus_id' matches the given ID
-        // and the 'kegiatanposyandu_w_u_s_id' is in the completed kegiatan IDs
         $wus = PeriksaWus::where('wus_id', $id)
-            ->whereIn('kegiatanposyandu_w_u_s_id', $kegiatanIds)  // Check against all completed kegiatan
+            ->whereIn('kegiatanposyandu_w_u_s_id', $kegiatanIds)
             ->get();
-
-        // If any PeriksaWus records are found, return them as JSON
         if ($wus->isNotEmpty()) {
             return response()->json($wus);
         }
-
-        // If no PeriksaWus records are found, return a 404 response
         return response()->json(['message' => 'No records found for the given WUS ID and completed kegiatan'], 404);
     }
 }

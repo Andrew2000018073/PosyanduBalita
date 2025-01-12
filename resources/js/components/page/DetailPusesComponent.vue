@@ -287,8 +287,8 @@
                                     {{ task.nama_kontrasepsi }}
                                 </td>
                                 <td :class="`text-center ${task.status.trim() === 'Sedang dipakai'
-                                        ? 'text-primary'
-                                        : 'text-danger'
+                                    ? 'text-primary'
+                                    : 'text-danger'
                                     }`">
                                     {{ task.status }}
                                 </td>
@@ -384,22 +384,17 @@ export default {
     methods: {
         initializeSelect2() {
             const vm = this;
-
-            // Check if Select2 is already initialized, if so, destroy it
             if (
                 $.fn.select2 &&
                 $("#my-select").hasClass("select2-hidden-accessible")
             ) {
                 $("#my-select").select2("destroy");
             }
-
-            // Initialize Select2 again
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.pus_id = $(this).val();
                 });
             $("#posyandu")
@@ -407,12 +402,10 @@ export default {
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.posyandus_id = $(this).val();
                 });
         },
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -425,8 +418,6 @@ export default {
             this.hapusKontrasepsi = false;
             this.selesaiKontrasepsi = false;
             this.taskData = { ...task };
-
-            // Convert tanggal_lahir to Date object if it's a string
             if (typeof this.taskData.tanggal_lahir === "string") {
                 const [day, month, year] =
                     this.taskData.tanggal_lahir.split("-");
@@ -435,21 +426,18 @@ export default {
                 );
             }
 
-            this.taskData.posyandus_id = task.posyandus_id || ""; // Set the selected posyandu ID
+            this.taskData.posyandus_id = task.posyandus_id || "";
             $("#taskModal").modal("show");
             this.$nextTick(() => {
                 $("#posyandu")
                     .val(this.taskData.posyandus_id)
-                    .trigger("change"); // Set value in Select2
+                    .trigger("change");
             });
-
             $("#taskModal").modal("show");
-
             this.$nextTick(() => {
                 this.initializeSelect2();
             });
         },
-
         selesaiPakai(task) {
             this.deleteMode = false;
             this.editMode = false;
@@ -477,7 +465,7 @@ export default {
 
             this.taskData.tanggal_lahir = this.formatDate(
                 this.taskData.tanggal_lahir
-            ); // Date will be in selected format
+            );
 
             if (
                 this.taskData.tanggal_lahir &&
@@ -569,7 +557,7 @@ export default {
             axios
                 .get(window.url + "api/detail-puses/" + id)
                 .then((response) => {
-                    this.informasis = response.data; // Store the received data in taskData
+                    this.informasis = response.data;
                 })
                 .catch((error) => {
                     console.error("Error fetching data:", error);
@@ -597,25 +585,15 @@ export default {
                 });
         },
         getAgeInMonths(dateString) {
-            // Split the date string by '-'
             const [day, month, year] = dateString.split("-");
-
-            // Create a new Date object using the extracted year, month, and day
             const birthDate = new Date(`${year}-${month}-${day}`);
             const today = new Date();
-
-            // Calculate the difference in years and months
             const yearsDiff = today.getFullYear() - birthDate.getFullYear();
             const monthsDiff = today.getMonth() - birthDate.getMonth();
-
-            // Calculate the total age in months
             let ageInMonths = yearsDiff * 12 + monthsDiff;
-
-            // Adjust if the current day of the month is earlier than the birth date's day
             if (today.getDate() < birthDate.getDate()) {
                 ageInMonths--;
             }
-
             return ageInMonths;
         },
         closeModal() {
@@ -629,14 +607,13 @@ export default {
                     this.$nextTick(() => {
                         $("#posyandu")
                             .val(this.taskData.posyandus_id)
-                            .trigger("change"); // Set initial value
+                            .trigger("change");
                     });
                 })
                 .catch((errors) => {
                     console.log(errors);
                 });
         },
-
         TambahKontrasepsi() {
             this.deleteMode = false;
             this.editMode = false;
@@ -668,28 +645,25 @@ export default {
 
         removeKontrasepsi(rowIndex) {
             console.log("Row index:", rowIndex);
-            this.taskData = { ...this.pakai[rowIndex] }; // Get the data for the row
-            this.deleteMode = true; // Set delete mode
-            this.editMode = false; // Ensure edit mode is off
-            this.hapusKontrasepsi = false; // Ensure hapusKontrasepsi is off
-            $("#taskModal").modal("show"); // Show the modal
+            this.taskData = { ...this.pakai[rowIndex] };
+            this.deleteMode = true;
+            this.editMode = false;
+            this.hapusKontrasepsi = false;
+            $("#taskModal").modal("show");
         },
         storeIdAndNavigate() {
-            const pusId = this.$route.params.id; // Get the ID from the route parameters
-            console.log("Storing ID:", pusId); // Log the ID to ensure it’s correct
-
-            // Check if pusId is defined before storing
+            const pusId = this.$route.params.id;
+            console.log("Storing ID:", pusId);
             if (pusId) {
-                localStorage.setItem("PassedId", pusId); // Store the ID
+                localStorage.setItem("PassedId", pusId);
                 console.log(
                     "Current localStorage value for PassedId:",
                     localStorage.getItem("PassedId")
-                ); // Verify it's stored correctly
+                );
             } else {
-                console.error("No ID found to store."); // Error handling if ID is not found
+                console.error("No ID found to store.");
             }
-
-            this.$router.push({ name: "tambah-kontrasepsi" }); // Navigate to the next page
+            this.$router.push({ name: "tambah-kontrasepsi" });
         },
     },
 

@@ -162,7 +162,7 @@ export default {
                     if ($.fn.DataTable.isDataTable("#tablekegiatan")) {
                         $("#tablekegiatan").DataTable().destroy();
                     }
-                    this.kegiatan = response.data; // Ambil 5 data terakhir
+                    this.kegiatan = response.data;
                     this.$nextTick(() => {
                         $("#tablekegiatan").DataTable({
                             lengthChange: false,

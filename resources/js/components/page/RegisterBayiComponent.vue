@@ -170,7 +170,6 @@ export default {
     },
     methods: {
         formatDate(date) {
-            // Function to format the date as dd-mm-yyyy
             const [year, month, day] = new Date(date)
                 .toISOString()
                 .split("T")[0]
@@ -182,11 +181,11 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.posyandus = response.data; // Simpan data ke properti tasks
-                    this.initializeSelect2(); // Initialize select2 after data is loaded
+                    this.posyandus = response.data;
+                    this.initializeSelect2();
                 })
                 .catch((errors) => {
-                    console.log(errors); // Tangani kesalahan jika ada
+                    console.log(errors);
                 });
         },
 
@@ -195,7 +194,6 @@ export default {
                 .get(window.url + "api/getPus")
                 .then((response) => {
                     this.ortu = response.data;
-                    // Reinitialize Select2 after the options have been updated
                     this.$nextTick(() => {
                         this.initializeSelect2();
                     });
@@ -214,7 +212,7 @@ export default {
             this.taskErrors.date = !this.taskData.date;
             this.taskErrors.jenis_kelamin = !this.taskData.jenis_kelamin;
 
-            this.taskData.tanggal_lahir = this.formatDate(this.taskData.date); // Date will be in selected format
+            this.taskData.tanggal_lahir = this.formatDate(this.taskData.date);
 
             if (
                 !this.taskErrors.pus_id &&
@@ -236,22 +234,17 @@ export default {
         },
         initializeSelect2() {
             const vm = this;
-
-            // Check if Select2 is already initialized, if so, destroy it
             if (
                 $.fn.select2 &&
                 $("#my-select").hasClass("select2-hidden-accessible")
             ) {
                 $("#my-select").select2("destroy");
             }
-
-            // Initialize Select2 again
             $("#my-select")
                 .select2({
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.pus_id = $(this).val();
                 });
             $("#posyandu")
@@ -259,7 +252,6 @@ export default {
                     dropdownAutoWidth: true,
                 })
                 .on("change", function () {
-                    // Update Vue model when Select2 value changes
                     vm.taskData.posyandus_id = $(this).val();
                 });
         },
@@ -281,8 +273,6 @@ export default {
                 panjangbadan_lahir: "",
                 panjangbadan_lahir: "",
             };
-
-            // Reinitialize Select2 after resetting form
             this.$nextTick(() => {
                 this.initializeSelect2();
             });
@@ -293,7 +283,6 @@ export default {
         this.getPosyandu();
     },
     beforeDestroy() {
-        // Destroy Select2 to avoid memory leaks
         $("#my-select").select2("destroy");
     },
 };

@@ -24,12 +24,12 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
 {
     protected $bulan;
     protected $idPosyandu;
-    protected $tahun; // Deklarasi properti $tahun
+    protected $tahun;
 
     public function __construct($idPosyandu,  $tahun)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
         $this->tahun = $tahun;
     }
 
@@ -473,17 +473,11 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
 
     public function registerEvents(): array
     {
@@ -492,20 +486,18 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet = $event->sheet;
                 $posyandu = Posyandu::with([
                     'wus.pus.bayi.PeriksaBalita.imunisasi' => function ($query) {
-                        $query->whereYear('imunisasi_balitas.created_at', $this->tahun); // Tetap menggunakan created_at untuk imunisasi
+                        $query->whereYear('imunisasi_balitas.created_at', $this->tahun);
                     },
                     'wus.periksawus.kegiatanposyandu' => function ($query) {
                         $query->whereYear(DB::raw("STR_TO_DATE(kegiatan_posyandus.tgl_kegiatan, '%d-%m-%Y')"), $this->tahun);
                     },
                     'wus.pus.alatKontrasepsis' => function ($query) {
                         $query->withPivot(['tanggal_pertama_pakai'])
-                            ->whereYear(DB::raw("STR_TO_DATE(pivot_kontrasepsi_puses.tanggal_pertama_pakai, '%d-%m-%Y')"), $this->tahun); // Filter berdasarkan tahun
+                            ->whereYear(DB::raw("STR_TO_DATE(pivot_kontrasepsi_puses.tanggal_pertama_pakai, '%d-%m-%Y')"), $this->tahun);
                     }
                 ])->find($this->idPosyandu);
 
-                // dd($posyandu->toArray());
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu);
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -515,7 +507,6 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A10');
                 $sheet->setCellValue('A8', 'NO');
 
@@ -562,7 +553,7 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->mergeCells('P9:P10');
                 $sheet->setCellValue('P9', 'YANG MENDAPAT KAPSUL VIT A');
                 $sheet->mergeCells('Q9:Q10');
-                $sheet->setCellValue('Q9', 'YANG MENDAPAT PMT PENYULUHAN'); //Kosongkan
+                $sheet->setCellValue('Q9', 'YANG MENDAPAT PMT PENYULUHAN');
 
                 $sheet->mergeCells('R8:AE8');
                 $sheet->setCellValue('R8', 'JUMLAH BAYI DAN BALITA');
@@ -594,43 +585,40 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->mergeCells('AF8:AJ8');
                 $sheet->setCellValue('AF8', 'JUMLAH WUS DAN BUMIL YANG DAPAT IMUNISASI TT');
                 $sheet->mergeCells('AF9:AF10');
-                $sheet->setCellValue('AF9', 'I'); //Kosongkan Sementara
+                $sheet->setCellValue('AF9', 'I');
                 $sheet->mergeCells('AG9:AG10');
-                $sheet->setCellValue('AG9', 'II'); //Kosongkan Sementara
+                $sheet->setCellValue('AG9', 'II');
                 $sheet->mergeCells('AH9:AH10');
-                $sheet->setCellValue('AH9', 'III'); //Kosongkan Sementara
+                $sheet->setCellValue('AH9', 'III');
                 $sheet->mergeCells('AI9:AI10');
-                $sheet->setCellValue('AI9', 'IV'); //Kosongkan Sementara
+                $sheet->setCellValue('AI9', 'IV');
                 $sheet->mergeCells('AJ9:AJ10');
-                $sheet->setCellValue('AJ9', 'V'); //Kosongkan Sementara
+                $sheet->setCellValue('AJ9', 'V');
 
                 $sheet->mergeCells('AK8:AL8');
                 $sheet->setCellValue('AK8', 'BALITA YANG MENDERITA DIARE');
                 $sheet->mergeCells('AK9:AK10');
-                $sheet->setCellValue('AK9', 'JUMLAH BALITA'); //Kosongkan
+                $sheet->setCellValue('AK9', 'JUMLAH BALITA');
                 $sheet->mergeCells('AL9:AL10');
-                $sheet->setCellValue('AL9', 'JUMLAH YANG MENDAPAT ORALIT'); //Kosongkan
+                $sheet->setCellValue('AL9', 'JUMLAH YANG MENDAPAT ORALIT');
 
                 $sheet->mergeCells('AM8:AM10');
-                $sheet->setCellValue('AM8', 'KETERANGAN'); //Kosongkan
+                $sheet->setCellValue('AM8', 'KETERANGAN');
 
 
-                // Style Heading
                 $sheet->getStyle('A8:AM10')->getFont()->setBold(true);
                 $sheet->getStyle('A8:AM10')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A8:AM10')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                // Data Tabel
-                $bulanSekarang = date('n'); // Ambil bulan sekarang (1-12)
+                $bulanSekarang = date('n');
 
-                $row = 11; // Baris awal untuk data
+                $row = 11;
 
                 for ($month = 1; $month <= $bulanSekarang; $month++) {
-                    $bulan = DateTime::createFromFormat('!m', $month)->format('F'); // Nama bulan berdasarkan angka
-                    $tahun = $this->tahun; // Tahun saat ini
-                    $jumlahBGM = 0; // Reset jumlahBGM untuk setiap bulan
+                    $bulan = DateTime::createFromFormat('!m', $month)->format('F');
+                    $tahun = $this->tahun;
+                    $jumlahBGM = 0;
 
-                    // Bagian 1: IBU HAMIL
                     $jumlahHamil = $posyandu->wus->where('statusperiksa', 'Hamil')->count();
 
                     $jumlahMemeriksakanDiri = $posyandu->wus->flatMap(function ($wus) use ($month, $tahun) {
@@ -646,12 +634,11 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                         });
                     })->count();
 
-                    $sheet->setCellValue("B$row", $bulan); // Bulan
-                    $sheet->setCellValue("C$row", $jumlahHamil); // Jumlah WUS Hamil
-                    $sheet->setCellValue("D$row", $jumlahMemeriksakanDiri); // Jumlah yang memeriksakan diri
-                    $sheet->setCellValue("E$row", $jumlahMendapatFE); // Jumlah yang mendapat FE
+                    $sheet->setCellValue("B$row", $bulan);
+                    $sheet->setCellValue("C$row", $jumlahHamil);
+                    $sheet->setCellValue("D$row", $jumlahMemeriksakanDiri);
+                    $sheet->setCellValue("E$row", $jumlahMendapatFE);
 
-                    // Bagian 2: MENYUSUI & VITAMIN A
                     $jumlahMenyusui = $posyandu->wus->where('statusperiksa', 'Tidak hamil & Menyusui')->count();
 
                     $jumlahVitaminA = $posyandu->wus->filter(function ($wus) {
@@ -660,10 +647,9 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                         });
                     })->count();
 
-                    $sheet->setCellValue("F$row", $jumlahMenyusui); // Jumlah WUS menyusui
-                    $sheet->setCellValue("G$row", $jumlahVitaminA); // Jumlah WUS yang mendapat vitamin A
+                    $sheet->setCellValue("F$row", $jumlahMenyusui);
+                    $sheet->setCellValue("G$row", $jumlahVitaminA);
 
-                    // Bagian 3: PESERTA KB (KONDOM, PIL, SUNTIK)
                     foreach (['Kondom', 'Pil', 'Suntik'] as $metode) {
                         ${"jumlah$metode"} = $posyandu->wus->flatMap(function ($wus) use ($month, $tahun, $metode) {
                             $alatKontrasepsis = optional($wus->pus)->alatKontrasepsis;
@@ -677,16 +663,15 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                         })->count() ?: 0;
                     }
 
-                    $sheet->setCellValue("H$row", $jumlahKondom); // Jumlah PUS memakai kondom
-                    $sheet->setCellValue("I$row", $jumlahPil); // Jumlah PUS memakai pil
-                    $sheet->setCellValue("J$row", $jumlahSuntik); // Jumlah PUS memakai suntik
+                    $sheet->setCellValue("H$row", $jumlahKondom);
+                    $sheet->setCellValue("I$row", $jumlahPil);
+                    $sheet->setCellValue("J$row", $jumlahSuntik);
 
-                    // Bagian 4: Periksa Balita dan BGM
                     $tanggalAkhirBulan = \Carbon\Carbon::create($tahun, $month)->endOfMonth()->format('Y-m-d');
                     $periksaTerbaru = PeriksaBalita::whereHas('Kegiatanposyandu', function ($query) use ($month, $tahun) {
                         $query->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $month)
                             ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $tahun);
-                    })->with('Kegiatanposyandu') // Pastikan relasi ini diload
+                    })->with('Kegiatanposyandu')
                         ->get()
                         ->sortByDesc(function ($periksa) {
                             return DateTime::createFromFormat('d-m-Y', $periksa->kegiatanposyandu->tgl_kegiatan ?? '01-01-1900')->getTimestamp();
@@ -711,7 +696,6 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
 
                     $sheet->setCellValue("O$row", $jumlahBGM);
 
-                    // Kolom K9: Jumlah Balita Sasaran Posyandu (S)
                     $kegiatanbalitaselesai = KegiatanPosyandu::where('posyandu_id', $this->idPosyandu)
                         ->where('status_kegiatan', 'selesai')
                         ->where('tipe_kegiatan', 'Balita')
@@ -722,20 +706,16 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                     $afiliasbalita = Bayi::where('posyandus_id', $this->idPosyandu)->count();
                     $targetpesertabalita = $kegiatanbalitaselesai * $afiliasbalita;
 
-                    // Kolom L9: Yang Memiliki KMS / Buku KIA
-                    $jumlahKMSBalita = Bayi::where('posyandus_id', $this->idPosyandu)->count(); // Semua balita di posyandu memiliki KMS atau Buku KIA
+                    $jumlahKMSBalita = Bayi::where('posyandus_id', $this->idPosyandu)->count();
                     $id = $this->idPosyandu;
-                    // Kolom M9: Yang Ditimbang (D)
                     $jumlahPesertaBalitaTotal = PeriksaBalita::whereHas('kegiatanposyandu', function ($query) use ($month, $tahun, $id) {
                         $query->where('posyandu_id', $id)
                             ->whereRaw('MONTH(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$month])
                             ->whereRaw('YEAR(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$tahun]);
                     })->count();
 
-                    // Kolom N9: Yang Naik (N)
                     $jumlahNaikBeratBadan = 0;
 
-                    // Ambil semua pemeriksaan balita pada bulan ini
                     $pemeriksaanBulanIni = PeriksaBalita::whereHas('kegiatanposyandu', function ($query) use ($month, $tahun, $id) {
                         $query->where('posyandu_id', $id)
                             ->whereRaw('MONTH(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$month])
@@ -743,7 +723,6 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                     })->get();
 
                     foreach ($pemeriksaanBulanIni as $periksa) {
-                        // Ambil pemeriksaan pada bulan sebelumnya untuk bayi yang sama
                         $pemeriksaanBulanLalu = PeriksaBalita::where('bayis_id', $periksa->bayis_id)
                             ->whereHas('kegiatanposyandu', function ($query) use ($month, $tahun, $id) {
                                 $query->where('posyandu_id', $id)
@@ -751,33 +730,27 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                                     ->whereRaw('YEAR(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$tahun]);
                             })->latest('id')->first();
 
-                        // Bandingkan berat badan jika ada pemeriksaan bulan lalu
                         if ($pemeriksaanBulanLalu && $periksa->berat_badan > $pemeriksaanBulanLalu->berat_badan) {
                             $jumlahNaikBeratBadan++;
                         }
                     }
 
-                    // Set nilai ke dalam sheet
-                    $sheet->setCellValue("K$row", $targetpesertabalita); // Jumlah Balita Sasaran Posyandu
-                    $sheet->setCellValue("L$row", $jumlahKMSBalita); // Yang Memiliki KMS / Buku KIA
-                    $sheet->setCellValue("M$row", $jumlahPesertaBalitaTotal); // Yang Ditimbang
-                    $sheet->setCellValue("N$row", $jumlahNaikBeratBadan); // Yang Naik
+                    $sheet->setCellValue("K$row", $targetpesertabalita);
+                    $sheet->setCellValue("L$row", $jumlahKMSBalita);
+                    $sheet->setCellValue("M$row", $jumlahPesertaBalitaTotal);
+                    $sheet->setCellValue("N$row", $jumlahNaikBeratBadan);
 
-                    // Kolom P9: Jumlah Bayi dan Balita yang Mendapat Kapsul Vitamin A
                     $jumlahVitaminA = PeriksaBalita::whereHas('kegiatanposyandu', function ($query) use ($month, $tahun, $id) {
                         $query->where('posyandu_id', $id)
                             ->whereRaw('MONTH(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$month])
                             ->whereRaw('YEAR(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$tahun]);
                     })->whereNotNull('vitamin_kuartal')->count();
 
-                    // Kosongkan untuk kolom Q9 (PMT PENYULUHAN) sesuai permintaan
-                    $jumlahPMT = ""; // Tidak ada data yang dihitung untuk PMT penyuluhan
+                    $jumlahPMT = "";
 
-                    // Set nilai ke dalam sheet
-                    $sheet->setCellValue("P$row", $jumlahVitaminA); // Yang Mendapat Kapsul Vitamin A
-                    $sheet->setCellValue("Q$row", $jumlahPMT); // Yang Mendapat PMT Penyuluhan (Kosong)
+                    $sheet->setCellValue("P$row", $jumlahVitaminA);
+                    $sheet->setCellValue("Q$row", $jumlahPMT);
 
-                    // Pastikan Anda sudah menghitung jumlah untuk masing-masing imunisasi sebelumnya
                     $jumlahHB0 = PeriksaBalita::whereHas('imunisasi', function ($query) {
                         $query->where('nama', 'HB0');
                     })->whereHas('kegiatanposyandu', function ($query) use ($month, $tahun, $id) {
@@ -802,10 +775,9 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                             ->whereRaw('YEAR(STR_TO_DATE(tgl_kegiatan, "%d-%m-%Y")) = ?', [$tahun]);
                     })->count();
 
-                    // Set nilai statis ke cell
-                    $sheet->setCellValue("R$row", $jumlahHB0); // Kolom untuk HB0
-                    $sheet->setCellValue("S$row", $jumlahBCG); // Kolom untuk BCG
-                    $sheet->setCellValue("T$row", $jumlahPolioTetes1); // Kolom untuk Polio Tetes 1
+                    $sheet->setCellValue("R$row", $jumlahHB0);
+                    $sheet->setCellValue("S$row", $jumlahBCG);
+                    $sheet->setCellValue("T$row", $jumlahPolioTetes1);
 
 
                     $jumlahPolioTetes2 = PeriksaBalita::whereHas('imunisasi', function ($query) {
@@ -939,11 +911,9 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                     $sheet->setCellValue("AI$row", $imunisasitt4);
                     $sheet->setCellValue("AJ$row", $imunisasitt5);
 
-                    $row++; // Pindah ke baris berikutnya
-
+                    $row++;
                 }
 
-                // Border untuk data
                 $sheet->getStyle("A10:AM" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(30);
@@ -952,8 +922,6 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->getColumnDimension("F")->setWidth(20);
                 $sheet->getColumnDimension("G")->setWidth(20);
                 $sheet->getColumnDimension("H")->setWidth(30);
-                // dd($bayiBulan);
-                // dd($bulan);
             },
         ];
     }
@@ -964,6 +932,6 @@ class HasilKegiatan implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function title(): string
     {
-        return 'Form 6'; // Nama worksheet untuk Sheet 1
+        return 'Form 6';
     }
 }

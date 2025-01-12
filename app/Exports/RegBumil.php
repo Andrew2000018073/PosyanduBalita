@@ -17,36 +17,27 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
 {
     protected $bulan;
     protected $idPosyandu;
-    protected $tahun; // Deklarasi properti $tahun
+    protected $tahun;
 
     public function __construct($idPosyandu,  $tahun)
     {
-        $this->bulan = now()->format('F'); // Bulan saat ini
-        $this->idPosyandu = $idPosyandu; // ID Posyandu yang dipilih
+        $this->bulan = now()->format('F');
+        $this->idPosyandu = $idPosyandu;
         $this->tahun = $tahun;
     }
 
 
 
-    /**
-     * Fungsi map bisa dikosongkan karena data akan diproses di registerEvents.
-     */
     public function map($posyandu): array
     {
         return [];
     }
 
-    /**
-     * Fungsi headings bisa dikosongkan karena pemformatan ditangani di registerEvents.
-     */
     public function headings(): array
     {
         return [];
     }
 
-    /**
-     * Mendaftarkan event untuk pemformatan sheet.
-     */
     public function registerEvents(): array
     {
         return [
@@ -61,17 +52,14 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                     }
                 ])->find($this->idPosyandu);
 
-                // dd($posyandu->toArray());
 
 
 
-                // Judul Utama
                 $sheet->mergeCells('A1:H1');
                 $sheet->setCellValue('A1', 'REGISTER IBU HAMIL DAN NIFAS');
                 $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-                // Subjudul
                 $sheet->setCellValue('A3', 'POSYANDU:');
                 $sheet->setCellValue('C3', $posyandu->nama_posyandu);
                 $sheet->setCellValue('A4', 'DESA / KELURAHAN:');
@@ -81,7 +69,6 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('A6', 'BULAN:');
                 $sheet->setCellValue('C6', $this->bulan);
 
-                // Heading Tabel
                 $sheet->mergeCells('A8:A10');
                 $sheet->setCellValue('A8', 'NO');
                 $sheet->mergeCells('B8:B10');
@@ -129,15 +116,12 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 $sheet->setCellValue('T8', 'CATATAN');
 
 
-                // Style Heading
                 $sheet->getStyle('A8:T10')->getFont()->setBold(true);
                 $sheet->getStyle('A8:T10')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A8:T10')->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
                 $sheet->getStyle('A8:T10')->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
 
-                // Data Tabel
                 $row = 11;
-                // Filter hanya WUS dengan status 'Hamil' atau 'Nifas' di periksawus
                 $filteredWus = $posyandu->wus->filter(function ($wus) {
                     return $wus->periksawus?->contains(function ($periksa) {
                         return in_array($periksa->statusperiksa, ['Hamil', 'Nifas']);
@@ -147,22 +131,18 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                 foreach ($filteredWus as $index => $wus) {
                     $periksaWus = $wus->periksawus ?? collect();
 
-                    // Filter data periksawus sesuai kriteria
                     $filteredPeriksaWus = $periksaWus->filter(function ($periksa) {
                         return in_array($periksa->statusperiksa, ['Hamil', 'Nifas']);
                     });
 
-                    // Mendapatkan kehamilan terbaru
                     $kehamilanTerbaru = $wus->kehamilan()->latest('tanggal_daftar')->first();
 
-                    $sheet->setCellValue("A{$row}", $index + 1); // NO
-                    $sheet->setCellValue("B{$row}", $wus->nama ?? '-'); // NAMA IBU
-                    $sheet->setCellValue("C{$row}", $wus->getUmur() ?? '-'); // UMUR
+                    $sheet->setCellValue("A{$row}", $index + 1);
+                    $sheet->setCellValue("B{$row}", $wus->nama ?? '-');
+                    $sheet->setCellValue("C{$row}", $wus->getUmur() ?? '-');
 
-                    // KELOMPOK DASAWISMA
                     $sheet->setCellValue("D{$row}", $wus->kelompok_dasawisma ?? '-');
 
-                    // PENDAFTARAN TANGGAL
                     $sheet->setCellValue("E{$row}", $kehamilanTerbaru->tanggal_daftar ?? '-');
                     if ($kehamilanTerbaru) {
                         $umurKehamilan = $kehamilanTerbaru->tanggal_awal_hamil
@@ -173,13 +153,11 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                     }
 
                     $sheet->setCellValue("F{$row}", $umurKehamilan);
-                    $sheet->setCellValue("G{$row}", $kehamilanTerbaru->kehamilan_ke ?? '-'); // HAMIL KE
+                    $sheet->setCellValue("G{$row}", $kehamilanTerbaru->kehamilan_ke ?? '-');
 
-                    // LILA
                     $lilaPeriksa = $filteredPeriksaWus->last()?->lila_periksa;
                     $sheet->setCellValue("H{$row}", $lilaPeriksa ?? '-');
 
-                    // TABLET TAMBAH DARAH
                     $tablet1 = $filteredPeriksaWus->where('tablettambah_darahs_kuartal', '1')->first();
                     $tablet2 = $filteredPeriksaWus->where('tablettambah_darahs_kuartal', '2')->first();
                     $tablet3 = $filteredPeriksaWus->where('tablettambah_darahs_kuartal', '3')->first();
@@ -188,18 +166,15 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
                     $sheet->setCellValue("L{$row}", $tablet2 ? $tablet2->Kegiatanposyandu->tgl_kegiatan ?? '-' : '-');
                     $sheet->setCellValue("M{$row}", $tablet3 ? $tablet3->Kegiatanposyandu->tgl_kegiatan ?? '-' : '-');
 
-                    // PEMBERIAN IMUNISASI (I - V)
                     for ($i = 1; $i <= 5; $i++) {
                         $imunisasi = $filteredPeriksaWus->where('imunisasi_kehamilans_kuartal', $i)->first();
-                        $col = chr(76 + $i); // Kolom mulai dari N
+                        $col = chr(76 + $i);
                         $sheet->setCellValue("{$col}{$row}", $imunisasi ? $imunisasi->Kegiatanposyandu->tgl_kegiatan ?? '-' : '-');
                     }
 
-                    // VITAMIN A (Terbaru)
                     $vitaminTerbaru = $filteredPeriksaWus->last()?->vitamin_kuartal;
                     $sheet->setCellValue("S{$row}", $vitaminTerbaru ?? '-');
 
-                    // CATATAN (Dikosongkan)
                     $sheet->setCellValue("T{$row}", '');
 
                     $row++;
@@ -207,7 +182,6 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
 
 
 
-                // Border untuk data
                 $sheet->getStyle("A10:T" . ($row - 1))->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
                 $sheet->getColumnDimension("B")->setWidth(30);
                 $sheet->getColumnDimension("C")->setWidth(20);
@@ -234,6 +208,6 @@ class RegBumil implements WithHeadings, WithMapping, WithEvents, WithTitle
 
     public function title(): string
     {
-        return 'Form 4'; // Nama worksheet untuk Sheet 1
+        return 'Form 4';
     }
 }

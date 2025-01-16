@@ -7,7 +7,7 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
-## About Laravel
+## Built With Laravel and Vue.Js
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
@@ -20,6 +20,20 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
 - [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
 Laravel is accessible, powerful, and provides tools required for large, robust applications.
+
+## App Requirement
+-Node.js
+-php 8.3
+
+## How to run
+Untuk menjalankan webapp ini lakukan langkah dibawah:
+- Git clone repo didalam htdocs pada xampp
+- Akses File App.js pada Resources/App.js
+- Konfigurasi router dan window.url
+- Konfigurasi file .env dengan mengubah database dan APP_URL
+- Jalankan composer update
+- Jalankan npm run dev
+- Akses melalui localhost via xampp
 
 ## Learning Laravel
 

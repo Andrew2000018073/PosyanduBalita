@@ -4,29 +4,20 @@
         <div class="container-fluid">
             <div class="row w-100">
                 <div class="col">
-                    <div class="row">
-                        <div class="col-lg-12 col-md-5 col-sm-6">
-                            <select class="form-control select2 w-100" v-model="filters.posyandu_id"
-                                id="filter-posyandu">
-                                <option value="">Semua Posyandu</option>
-                                <option v-for="task in posyandus" :key="task.id" :value="task.id">
-                                    {{ task.nama_posyandu }}
-                                </option>
-                            </select>
-                        </div>
-                    </div>
+                    <select class="form-control select2 w-100" v-model="filters.posyandu_id" id="filter-posyandu">
+                        <option value="">Semua Posyandu</option>
+                        <option v-for="task in posyandus" :key="task.id" :value="task.id">
+                            {{ task.nama_posyandu }}
+                        </option>
+                    </select>
                 </div>
 
-                <div class="col-auto">
-                    <button class="btn btn-outline-success" type="button" @click="applyFilters">
-                        Apply
-                    </button>
+                <div class="col">
+                    <VueDatePicker v-model="filters.tgl_kegiatan" :format="format" placeholder="Pilih Bulan Kegiatan"
+                        :enable-time-picker="false" />
                 </div>
-                <div class="col-auto">
-                    <button class="btn btn-outline-danger" type="button" @click="applyFilters">
-                        reset
-                    </button>
-                </div>
+
+
             </div>
         </div>
     </nav>
@@ -334,6 +325,7 @@ export default {
             },
             filters: {
                 posyandu_id: "",
+                tgl_kegiatan: "",
             },
             lineKekSeries: [],
             lineKekChartOptions: {
@@ -514,20 +506,7 @@ export default {
             },
         };
     },
-    mounted() {
-        this.getWus();
-        this.getStatus();
-        this.getJumlahWus();
-        this.getPosyandu(); // Fetch tasks when component is mounted
-        this.kasihPosyandu();
-        this.getKekLast12Months();
-        this.getKek();
-        this.getGemuk();
-        this.getPeriksa();
-        window.navigateToDetail = (wusId) => {
-            this.$router.push({ path: `/detail-wus/${wusId}` });
-        };
-    },
+
     beforeDestroy() {
         if ($("#my-select").data("select2")) {
             $("#my-select").select2("destroy");
@@ -535,6 +514,14 @@ export default {
     },
 
     methods: {
+        formatDateForApi(date) {
+            if (!date) return null;
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+        },
         getPeriksa() {
             axios
                 .get(
@@ -602,7 +589,8 @@ export default {
             axios
                 .get(window.url + "api/getPosyandu")
                 .then((response) => {
-                    this.tasks = response.data;
+                    this.posyandus = response.data;
+
                     this.initializeSelect2();
                 })
                 .catch((errors) => {
@@ -626,10 +614,6 @@ export default {
                     vm.taskData.posyandus_id = $(this).val();
                     console.log(vm.taskData.posyandus_id);
                 });
-        },
-
-        filterposyandu() {
-            const vm = this;
             if ($.fn.select2 && $("#filter-posyandu").data("select2")) {
                 $("#filter-posyandu").select2("destroy");
             }
@@ -639,6 +623,7 @@ export default {
                 })
                 .on("change", function () {
                     vm.filters.posyandu_id = $(this).val();
+                    vm.applyFilters();
                 });
         },
 
@@ -722,6 +707,28 @@ export default {
                     console.log(errors);
                 });
         },
+        getGemukPosByDate($id, $date) {
+            const $formattedDate = this.formatDateForApi($date);
+            axios
+                .get(window.url + "api/getGemukPosByDate/" + $id + "/" + $formattedDate)
+                .then((response) => {
+                    this.bandinggemuk = response.data;
+                    let gemuk = 0;
+                    let normal = 0;
+
+                    this.bandinggemuk.forEach((item) => {
+                        if (item.lingkarperut_periksa <= 80) {
+                            normal += 1;
+                        } else if (item.lingkarperut_periksa > 80) {
+                            gemuk += 1;
+                        }
+                    });
+                    this.pieGemukSeries = [gemuk, normal];
+                })
+                .catch((errors) => {
+                    console.log(errors);
+                });
+        },
         getPeriksaPos($id) {
             axios
                 .get(
@@ -776,7 +783,7 @@ export default {
                 });
         },
         getKek() {
-            this.modalkek = [];
+            let tempModalKek = [];
             axios
                 .get(window.url + "api/getKek")
                 .then((response) => {
@@ -789,18 +796,19 @@ export default {
                             normal += 1;
                         } else if (item.lila_periksa < 23.5) {
                             kek += 1;
-                            this.modalkek.push(item);
+                            tempModalKek.push(item);
                         }
                     });
-                    this.pieKEKSeries = [kek, normal];
+                    this.modalkek = tempModalKek;
                     this.reinitializeDataModal(this.modalkek);
+                    this.pieKEKSeries = [kek, normal];
                 })
                 .catch((errors) => {
                     console.log(errors);
                 });
         },
         getKekPos($id) {
-            this.modalkek = [];
+            let tempModalKek = [];
             axios
                 .get(window.url + "api/getKekPos/" + $id)
                 .then((response) => {
@@ -813,19 +821,67 @@ export default {
                             normal += 1;
                         } else if (item.lila_periksa < 23.5) {
                             kek += 1;
-                            this.modalkek.push(item);
+                            tempModalKek.push(item);
                         }
                     });
-                    console.log('Isi modal:' + this.modalkek);
-                    this.pieKEKSeries = [kek, normal];
+                    this.modalkek = tempModalKek;
                     this.reinitializeDataModal(this.modalkek);
+                    this.pieKEKSeries = [kek, normal];
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        },
+        getKekPosByDate($id, $tanggal) {
+            let tempModalKek = [];
+            axios
+                .get(window.url + "api/getKekPos/" + $id)
+                .then((response) => {
+                    this.bandingkek = response.data;
+                    let kek = 0;
+                    let normal = 0;
+
+                    this.bandingkek.forEach((item) => {
+                        if (item.lila_periksa >= 23.5) {
+                            normal += 1;
+                        } else if (item.lila_periksa < 23.5) {
+                            kek += 1;
+                            tempModalKek.push(item);
+                        }
+                    });
+                    this.modalkek = tempModalKek;
+                    this.reinitializeDataModal(this.modalkek);
+                    this.pieKEKSeries = [kek, normal];
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        },
+        getStatusPos($id) {
+            axios
+                .get(window.url + "api/getWusStatusPos/" + $id)
+                .then((response) => {
+                    this.status = response.data;
+                    const {
+                        tdmenikah,
+                        hamil,
+                        tdhamilsusu,
+                        tdhamilanggur,
+                        nifas,
+                    } = this.status;
+                    this.pieSeries = [
+                        tdmenikah,
+                        hamil,
+                        tdhamilsusu,
+                        tdhamilanggur,
+                        nifas,
+                    ];
                 })
                 .catch((errors) => {
                     console.log(errors);
                 });
         },
-
-        getStatusPos($id) {
+        getStatusPosByDate($id, $tanggal) {
             axios
                 .get(window.url + "api/getWusStatusPos/" + $id)
                 .then((response) => {
@@ -939,27 +995,28 @@ export default {
         closeModal() {
             $("#taskModal").modal("hide");
         },
-        kasihPosyandu() {
-            axios
-                .get(window.url + "api/getPosyandu")
-                .then((response) => {
-                    this.posyandus = response.data;
-                    this.filterposyandu();
-                })
-                .catch((errors) => {
-                    console.log(errors);
-                });
-        },
         applyFilters() {
-            if (this.filters.posyandu_id) {
-                this.getWusPosyandu(this.filters.posyandu_id);
-                this.getJumlahWusposyandu(this.filters.posyandu_id);
-                this.getStatusPos(this.filters.posyandu_id);
-                this.getKekLast12MonthsPos(this.filters.posyandu_id);
-                this.getKekPos(this.filters.posyandu_id);
-                this.getGemukPos(this.filters.posyandu_id);
-                this.getPeriksaPos(this.filters.posyandu_id);
-            } else {
+            const posyanduId = this.filters.posyandu_id;
+            const tanggal = this.filters.tgl_kegiatan;
+
+            if (posyanduId && tanggal) {
+                // Filter berdasarkan posyandu dan tanggal
+                this.getStatusPosByDate(posyanduId, tanggal);
+                this.getKekPosByDate(posyanduId, tanggal);
+                this.getGemukPosByDate(posyanduId, tanggal);
+            }
+            else if (posyanduId) {
+                // Filter hanya berdasarkan posyandu
+                this.getWusPosyandu(posyanduId);
+                this.getJumlahWusposyandu(posyanduId);
+                this.getStatusPos(posyanduId);
+                this.getKekLast12MonthsPos(posyanduId);
+                this.getKekPos(posyanduId);
+                this.getGemukPos(posyanduId);
+                this.getPeriksaPos(posyanduId);
+            }
+            else {
+                // Tidak ada filter
                 this.getKekLast12Months();
                 this.getStatus();
                 this.getWus();
@@ -968,6 +1025,16 @@ export default {
                 this.getGemuk();
                 this.getPeriksa();
             }
+        },
+
+        resetDateFilter() {
+            this.filters.tgl_kegiatan = null;
+            this.applyFilters();
+        },
+
+
+        handleDateChange() {
+            this.applyFilters();
         },
 
         getWus() {
@@ -1203,6 +1270,31 @@ export default {
                     $("#taskModal").modal("hide");
                 });
         },
+    },
+    mounted() {
+        this.getWus();
+        this.getStatus();
+        this.getJumlahWus();
+        this.getPosyandu();
+        this.getKekLast12Months();
+        this.getKek();
+        this.getGemuk();
+        this.getPeriksa();
+        // this.checktanggal();
+        window.navigateToDetail = (wusId) => {
+            this.$router.push({ path: `/detail-wus/${wusId}` });
+        };
+        const datepicker = this.$refs.datepicker; // Tambahkan ref="datepicker" di VueDatePicker
+        if (datepicker) {
+            datepicker.$on('clear', this.resetDateFilter);
+        }
+    },
+    watch: {
+        'filters.tgl_kegiatan': {
+            handler(newVal) {
+                this.handleDateChange();
+            }
+        }
     },
 };
 </script>

@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Wus;
-use App\Models\PendaftaranIbuHamil;
 use App\Models\Kehamilan;
 use App\Models\periksawus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\PendaftaranIbuHamil;
 use Illuminate\Support\Facades\Log;
 
 class WusController extends Controller
@@ -172,8 +173,8 @@ class WusController extends Controller
     {
         $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
-                $subQuery->where('status_kegiatan', 'selesai');
-            })->latest('created_at')->take(1);
+                $subQuery->where('status_kegiatan', 'selesai')->latest('tgl_kegiatan');
+            })->take(1);
         }])->get();
 
         $latestLiperData = [];
@@ -205,8 +206,8 @@ class WusController extends Controller
     {
         $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) {
             $query->whereHas('Kegiatanposyandu', function ($subQuery) {
-                $subQuery->where('status_kegiatan', 'selesai');
-            })->latest('created_at')->take(1);
+                $subQuery->where('status_kegiatan', 'selesai')->latest('tgl_kegiatan');
+            })->take(1);
         }])->where('posyandus_id', $id)->get();
 
         $latestLilaData = [];
@@ -219,11 +220,49 @@ class WusController extends Controller
             if ($latestPeriksa) {
                 $lingkarperut = $latestPeriksa->lingkarperut_periksa;
             }
-
             if (is_null($lingkarperut)) {
                 $lingkarperut = $this->getLatestLilaFromPreviousActivities($wus->id);
             }
+            $latestLilaData[] = [
+                'wus_id' => $wus->id,
+                'nama' => $wus->nama,
+                'lingkarperut_periksa' => $lingkarperut,
+            ];
+        }
+        return response()->json($latestLilaData);
+    }
+    public function getGemukPosByDate($id, $date)
+    {
+        // Format $date menjadi bulan dan tahun
 
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
+        // dd($inputMonth, $inputYear);
+
+
+        $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) use ($inputMonth, $inputYear) {
+            $query->whereHas('Kegiatanposyandu', function ($subQuery) use ($inputMonth, $inputYear) {
+                $subQuery->where('status_kegiatan', 'selesai')
+                    ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                    ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+            })->take(1);
+        }])->where('posyandus_id', $id)->get();
+        // dd($wusWithLatestlingper);
+
+        $latestLilaData = [];
+
+        foreach ($wusWithLatestlingper as $wus) {
+            $latestPeriksa = $wus->periksawus->first();
+
+            $lingkarperut = null;
+
+            if ($latestPeriksa) {
+                $lingkarperut = $latestPeriksa->lingkarperut_periksa;
+            }
+            if (is_null($lingkarperut)) {
+                $lingkarperut = $this->getLatestLilaFromPreviousActivities($wus->id);
+            }
             $latestLilaData[] = [
                 'wus_id' => $wus->id,
                 'nama' => $wus->nama,
@@ -233,7 +272,6 @@ class WusController extends Controller
 
         return response()->json($latestLilaData);
     }
-
 
     public function getKek()
     {

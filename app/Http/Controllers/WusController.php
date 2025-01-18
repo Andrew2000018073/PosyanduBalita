@@ -102,13 +102,64 @@ class WusController extends Controller
 
         return response()->json(compact('tdmenikah', 'hamil', 'tdhamilsusu', 'tdhamilanggur', 'nifas'));
     }
+    public function getWusStatusByDate($date)
+    {
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
+        // dd($inputMonth, $inputYear);
+
+        $counts = Periksawus::whereHas('Kegiatanposyandu', function ($query) use ($inputMonth, $inputYear) {
+            $query->where('status_kegiatan', 'selesai')
+                ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+        })
+            ->select('statusperiksa', DB::raw('count(*) as total'))
+            ->groupBy('statusperiksa')
+            ->get()
+            ->pluck('total', 'statusperiksa');
+
+        $tdmenikah = $counts['Tidak menikah'] ?? 0;
+        $hamil = $counts['Hamil'] ?? 0;
+        $tdhamilsusu = $counts['Tidak hamil & Menyusui'] ?? 0;
+        $tdhamilanggur = $counts['Tidak hamil & Tidak menyusui'] ?? 0;
+        $nifas = $counts['Nifas'] ?? 0;
+
+        return response()->json(compact('tdmenikah', 'hamil', 'tdhamilsusu', 'tdhamilanggur', 'nifas'));
+    }
     public function getWusStatusPos($id)
     {
+
         $tdmenikah = Wus::where('statuswus', 'Tidak menikah')->where('posyandus_id', $id)->count();
         $hamil = Wus::where('statuswus', 'Hamil')->where('posyandus_id', $id)->count();
         $tdhamilsusu = Wus::where('statuswus', 'Tidak hamil & Menyusui')->where('posyandus_id', $id)->count();
         $tdhamilanggur = Wus::where('statuswus', 'Tidak hamil & Tidak menyusui')->where('posyandus_id', $id)->count();
         $nifas = Wus::where('statuswus', 'Nifas')->where('posyandus_id', $id)->count();
+
+        return response()->json(compact('tdmenikah', 'hamil', 'tdhamilsusu', 'tdhamilanggur', 'nifas'));
+    }
+    public function getWusStatusPosByDate($id, $date)
+    {
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
+
+        $counts = Periksawus::whereHas('Kegiatanposyandu', function ($query) use ($inputMonth, $inputYear) {
+            $query->where('status_kegiatan', 'selesai')
+                ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+        })
+            ->select('statusperiksa', DB::raw('count(*) as total'))
+            ->groupBy('statusperiksa')
+            ->get()
+            ->pluck('total', 'statusperiksa');
+
+        $tdmenikah = $counts['Tidak menikah'] ?? 0;
+        $hamil = $counts['Hamil'] ?? 0;
+        $tdhamilsusu = $counts['Tidak hamil & Menyusui'] ?? 0;
+        $tdhamilanggur = $counts['Tidak hamil & Tidak menyusui'] ?? 0;
+        $nifas = $counts['Nifas'] ?? 0;
+
 
         return response()->json(compact('tdmenikah', 'hamil', 'tdhamilsusu', 'tdhamilanggur', 'nifas'));
     }
@@ -272,6 +323,47 @@ class WusController extends Controller
 
         return response()->json($latestLilaData);
     }
+    public function getGemukByDate($date)
+    {
+        // Format $date menjadi bulan dan tahun
+
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
+        // dd($inputMonth, $inputYear);
+
+
+        $wusWithLatestlingper = Wus::with(['periksawus' => function ($query) use ($inputMonth, $inputYear) {
+            $query->whereHas('Kegiatanposyandu', function ($subQuery) use ($inputMonth, $inputYear) {
+                $subQuery->where('status_kegiatan', 'selesai')
+                    ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                    ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+            })->take(1);
+        }])->get();
+        // dd($wusWithLatestlingper);
+
+        $latestLilaData = [];
+
+        foreach ($wusWithLatestlingper as $wus) {
+            $latestPeriksa = $wus->periksawus->first();
+
+            $lingkarperut = null;
+
+            if ($latestPeriksa) {
+                $lingkarperut = $latestPeriksa->lingkarperut_periksa;
+            }
+            if (is_null($lingkarperut)) {
+                $lingkarperut = $this->getLatestLilaFromPreviousActivities($wus->id);
+            }
+            $latestLilaData[] = [
+                'wus_id' => $wus->id,
+                'nama' => $wus->nama,
+                'lingkarperut_periksa' => $lingkarperut,
+            ];
+        }
+
+        return response()->json($latestLilaData);
+    }
 
     public function getKek()
     {
@@ -329,10 +421,70 @@ class WusController extends Controller
 
         return response()->json($latestLilaData);
     }
+    public function getKekPosByDate($id, $date)
+    {
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
 
+        $wusWithLatestLila = Wus::with(['periksawus' => function ($query) use ($inputMonth, $inputYear) {
+            $query->whereHas('Kegiatanposyandu', function ($subQuery) use ($inputMonth, $inputYear) {
+                $subQuery->where('status_kegiatan', 'selesai')
+                    ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                    ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+            })->take(1);
+        }])->where('posyandus_id', $id)->where('statuswus', 'Hamil')->get();
 
+        $latestLilaData = [];
 
+        foreach ($wusWithLatestLila as $wus) {
+            $latestPeriksa = $wus->periksawus->first();
 
+            $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : $this->getLatestLilaFromPreviousActivities($wus->id);
+
+            if (!is_null($lilaTerbaru)) {
+                $latestLilaData[] = [
+                    'wus_id' => $wus->id,
+                    'nama' => $wus->nama,
+                    'lila_periksa' => $lilaTerbaru,
+                ];
+            }
+        }
+
+        return response()->json($latestLilaData);
+    }
+    public function getKekByDate($date)
+    {
+        $inputDate = \Carbon\Carbon::createFromFormat('d-m-Y', $date);
+        $inputMonth = $inputDate->format('m');
+        $inputYear = $inputDate->format('Y');
+
+        $wusWithLatestLila = Wus::with(['periksawus' => function ($query) use ($inputMonth, $inputYear) {
+            $query->whereHas('Kegiatanposyandu', function ($subQuery) use ($inputMonth, $inputYear) {
+                $subQuery->where('status_kegiatan', 'selesai')
+                    ->whereMonth(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputMonth)
+                    ->whereYear(DB::raw("STR_TO_DATE(tgl_kegiatan, '%d-%m-%Y')"), $inputYear);
+            })->take(1);
+        }])->where('statuswus', 'Hamil')->get();
+
+        $latestLilaData = [];
+
+        foreach ($wusWithLatestLila as $wus) {
+            $latestPeriksa = $wus->periksawus->first();
+
+            $lilaTerbaru = $latestPeriksa ? $latestPeriksa->lila_periksa : $this->getLatestLilaFromPreviousActivities($wus->id);
+
+            if (!is_null($lilaTerbaru)) {
+                $latestLilaData[] = [
+                    'wus_id' => $wus->id,
+                    'nama' => $wus->nama,
+                    'lila_periksa' => $lilaTerbaru,
+                ];
+            }
+        }
+
+        return response()->json($latestLilaData);
+    }
     private function getLatestLilaFromPreviousActivities($wusId)
     {
         $periksaWus = PeriksaWus::where('wus_id', $wusId)

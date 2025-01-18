@@ -1,21 +1,24 @@
 <template>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
+        <div class="container">
             <div class="row w-100">
 
-                <div class="col-lg-6 col-md-5 col-sm-6">
+                <div class="col-lg-4 col-md-4 col-sm-4">
                     <select class="form-control select2 w-100" v-model="filters.posyandu_id" id="filter-posyandu">
                         <option value="">Semua Posyandu</option>
                         <option v-for="task in posyandus" :key="task.id" :value="task.id">
                             {{ task.nama_posyandu }}
                         </option>
                     </select>
-
                 </div>
 
+                <div class="col-lg-4 col-md-4 col-sm-4">
+                    <VueDatePicker v-model="filters.tgl_kegiatan" class="w-100" :format="format"
+                        placeholder="Pilih Bulan Kegiatan" :enable-time-picker="false" />
+                </div>
 
-                <div class="col-lg-6 col-md-5 col-sm-6">
+                <div class="col-lg-4 col-md-4 col-sm-4">
                     <select name=" filtergizi" id="filtergizi" class="form-control select2 w-100">
                         <option value="">Tampilkan daftar anak</option>
                         <option value="bbskurang">Anak Berat Badan Sangat Kurang</option>
@@ -39,7 +42,7 @@
         <div class="col-md-4 col-lg-6">
             <div class="card border-primary mb-3">
                 <div class="card-header">
-                    Perbandingan Gizi anak laki-laki terbaru
+                    Perbandingan berat badan anak laki-laki terbaru
                 </div>
                 <div class="card-body text-primary">
                     <apexchart type="pie" :width="500" :options="pieBBULOptions" :series="pieBBULSeries">
@@ -49,7 +52,7 @@
         </div>
         <div class="col-md-4 col-lg-6">
             <div class="card border-primary mb-3">
-                <div class="card-header">Perbandingan Gizi anak Perempuan terbaru</div>
+                <div class="card-header">Perbandingan berat badan anak Perempuan terbaru</div>
                 <div class="card-body text-primary">
                     <apexchart type="pie" :width="500" :options="pieBBUPOptions" :series="pieBBUPSeries">
                     </apexchart>
@@ -254,7 +257,7 @@
         </div>
     </div>
 
-    <!-- Modal tampil sangat pendek -->
+    <!-- Modal tampil Keterangan Gizi -->
     <div class="modal fade" id="DaftarModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -391,6 +394,7 @@ export default {
             },
             filters: {
                 posyandu_id: "",
+                tgl_kegiatan: "",
             },
             // Data and options for the Pie chart
             pieSeries: [0, 0, 0, 0, 0],
@@ -601,29 +605,15 @@ export default {
             },
         };
     },
-    mounted() {
-        this.getBayis();
-        this.getPosyandu();
-        this.kasihPosyandu();
-        this.getBeratBadanUmur();
-        this.gettinggibadanumur();
-        this.getPeriksa();
-        this.getGizi();
-        this.initializeSelect2();
-        window.navigateToDetail = (wusId) => {
-            this.$router.push({ path: `/detail-wus/${wusId}` });
-        };
-    },
-    beforeDestroy() {
-        if ($("#my-select").data("select2")) {
-            $("#my-select").select2("destroy");
-        }
-        if ($("#posyandu").data("select2")) {
-            $("#posyandu").select2("destroy");
-        }
-    },
-
     methods: {
+        formatDateForApi(date) {
+            if (!date) return null;
+            const d = new Date(date);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}-${month}-${year}`;
+        },
         getPeriksa() {
             axios
                 .get(
@@ -955,12 +945,156 @@ export default {
                     console.error("Error saat mengambil data:", errors);
                 });
         },
+        getberatbadanumurByDate(date) {
+            this.modaltampildatabbskurang = [];
+            this.modaltampildatabbkurang = [];
+            this.modalresikobblebih = [];
+            const $formattedDate = this.formatDateForApi(date);
+            axios
+                .get(window.url + "api/getberatbadanumurByDate/" + $formattedDate)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandingberat = data;
+                    let giziBurukL = 0, giziKurangL = 0, giziBaikL = 0, giziLebihL = 0;
+                    let giziBurukP = 0, giziKurangP = 0, giziBaikP = 0, giziLebihP = 0;
+                    this.bandingberat.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap untuk item:", item);
+                            return;
+                        }
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Berat Badan Sangat Kurang":
+                                    giziBurukL++;
+                                    this.modaltampildatabbskurang.push(item);
+                                    break;
+                                case "Berat Badan Kurang":
+                                    giziKurangL++;
+                                    this.modaltampildatabbkurang.push(item);
+                                    break;
+                                case "Berat Badan Normal":
+                                    giziBaikL++;
+                                    break;
+                                case "Resiko Berat Badan Lebih":
+                                    giziLebihL++;
+                                    this.modalresikobblebih.push(item);
+                                    break;
+                                default:
+                                    console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Berat Badan Sangat Kurang":
+                                    giziBurukP++;
+                                    this.modaltampildatabbskurang.push(item);
+                                    break;
+                                case "Berat Badan Kurang":
+                                    giziKurangP++;
+                                    this.modaltampildatabbkurang.push(item);
+                                    break;
+                                case "Berat Badan Normal":
+                                    giziBaikP++;
+                                    break;
+                                case "Resiko Berat Badan Lebih":
+                                    giziLebihP++;
+                                    this.modalresikobblebih.push(item);
+                                    break;
+                                default:
+                                    console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.log("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieBBULSeries = [giziBurukL, giziKurangL, giziBaikL, giziLebihL];
+                    this.pieBBUPSeries = [giziBurukP, giziKurangP, giziBaikP, giziLebihP];
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
         getberatbadanumurPos(posyanduId) {
             this.modaltampildatabbskurang = [];
             this.modaltampildatabbkurang = [];
             this.modalresikobblebih = [];
             axios
                 .get(window.url + "api/getberatbadanumurpos/" + posyanduId)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandingberat = data;
+                    let giziBurukL = 0, giziKurangL = 0, giziBaikL = 0, giziLebihL = 0;
+                    let giziBurukP = 0, giziKurangP = 0, giziBaikP = 0, giziLebihP = 0;
+                    this.bandingberat.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap untuk item:", item);
+                            return;
+                        }
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Berat Badan Sangat Kurang":
+                                    giziBurukL++;
+                                    this.modaltampildatabbskurang.push(item);
+                                    break;
+                                case "Berat Badan Kurang":
+                                    giziKurangL++;
+                                    this.modaltampildatabbkurang.push(item);
+                                    break;
+                                case "Berat Badan Normal":
+                                    giziBaikL++;
+                                    break;
+                                case "Resiko Berat Badan Lebih":
+                                    giziLebihL++;
+                                    this.modalresikobblebih.push(item);
+                                    break;
+                                default:
+                                    console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Berat Badan Sangat Kurang":
+                                    giziBurukP++;
+                                    this.modaltampildatabbskurang.push(item);
+                                    break;
+                                case "Berat Badan Kurang":
+                                    giziKurangP++;
+                                    this.modaltampildatabbkurang.push(item);
+                                    break;
+                                case "Berat Badan Normal":
+                                    giziBaikP++;
+                                    break;
+                                case "Resiko Berat Badan Lebih":
+                                    giziLebihP++;
+                                    this.modalresikobblebih.push(item);
+                                    break;
+                                default:
+                                    console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.log("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieBBULSeries = [giziBurukL, giziKurangL, giziBaikL, giziLebihL];
+                    this.pieBBUPSeries = [giziBurukP, giziKurangP, giziBaikP, giziLebihP];
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
+        getberatbadanumurPosByDate(posyanduId, date) {
+            this.modaltampildatabbskurang = [];
+            this.modaltampildatabbkurang = [];
+            this.modalresikobblebih = [];
+            const $formattedDate = this.formatDateForApi(date);
+            axios
+                .get(window.url + "api/getberatbadanumurposByDate/" + posyanduId + "/" + $formattedDate)
                 .then((response) => {
                     const data = response.data;
                     if (!Array.isArray(data)) {
@@ -1045,6 +1179,121 @@ export default {
                             console.warn("Data tidak lengkap:", item);
                             return;
                         }
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Sangat Pendek": sangatPendekL++;
+                                    this.modaltampildatasangatpendek.push(item); break;
+                                case "Pendek": pendekL++;
+                                    this.modaltampildatapendek.push(item); break;
+                                case "Normal": normalL++; break;
+                                case "Tinggi": tinggiL++; break;
+                                default: console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Sangat Pendek": sangatPendekP++;
+                                    this.modaltampildatasangatpendek.push(item); break;
+                                case "Pendek": pendekP++;
+                                    this.modaltampildatapendek.push(item); break;
+                                case "Normal": normalP++; break;
+                                case "Tinggi": tinggiP++; break;
+                                default: console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieTBULSeries = [sangatPendekL, pendekL, normalL, tinggiL];
+                    this.pieTBUPSeries = [sangatPendekP, pendekP, normalP, tinggiP];
+                    if (!this.pieTBULSeries.some(value => value > 0)) {
+                        console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
+                    }
+                    if (!this.pieTBUPSeries.some(value => value > 0)) {
+                        console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
+                    }
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
+        gettinggibadanumurByDate(date) {
+            this.modaltampildatasangatpendek = [];
+            this.modaltampildatapendek = [];
+            const $formattedDate = this.formatDateForApi(date);
+            axios
+                .get(window.url + "api/gettinggibadanumurByDate/" + $formattedDate)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandingberat = data;
+                    let sangatPendekL = 0, pendekL = 0, normalL = 0, tinggiL = 0;
+                    let sangatPendekP = 0, pendekP = 0, normalP = 0, tinggiP = 0;
+                    this.bandingberat.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap:", item);
+                            return;
+                        }
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Sangat Pendek": sangatPendekL++;
+                                    this.modaltampildatasangatpendek.push(item); break;
+                                case "Pendek": pendekL++;
+                                    this.modaltampildatapendek.push(item); break;
+                                case "Normal": normalL++; break;
+                                case "Tinggi": tinggiL++; break;
+                                default: console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Sangat Pendek": sangatPendekP++;
+                                    this.modaltampildatasangatpendek.push(item); break;
+                                case "Pendek": pendekP++;
+                                    this.modaltampildatapendek.push(item); break;
+                                case "Normal": normalP++; break;
+                                case "Tinggi": tinggiP++; break;
+                                default: console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieTBULSeries = [sangatPendekL, pendekL, normalL, tinggiL];
+                    this.pieTBUPSeries = [sangatPendekP, pendekP, normalP, tinggiP];
+                    if (!this.pieTBULSeries.some(value => value > 0)) {
+                        console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
+                    }
+                    if (!this.pieTBUPSeries.some(value => value > 0)) {
+                        console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
+                    }
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
+        gettinggibadanumurPosByDate(posyanduId, date) {
+            this.modaltampildatasangatpendek = [];
+            this.modaltampildatapendek = [];
+            const $formattedDate = this.formatDateForApi(date);
+            axios
+                .get(window.url + "api/gettinggibadanumurposByDate/" + posyanduId + "/" + $formattedDate)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandingberat = data;
+                    let sangatPendekL = 0, pendekL = 0, normalL = 0, tinggiL = 0;
+                    let sangatPendekP = 0, pendekP = 0, normalP = 0, tinggiP = 0;
+                    this.bandingberat.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap:", item);
+                            return;
+                        }
+
                         if (item.jenis_kelamin === "Laki-laki") {
                             switch (item.jenis) {
                                 case "Sangat Pendek": sangatPendekL++;
@@ -1212,6 +1461,79 @@ export default {
                     console.error("Error saat mengambil data:", errors);
                 });
         },
+        getGiziByDate(date) {
+            this.modalgiziburuk = [];
+            this.modalgizikurang = [];
+            this.modalresikogzlebih = [];
+            this.modalgiziLebih = [];
+            this.modalobesitas = [];
+            const $formattedDate = this.formatDateForApi(date);
+            axios
+                .get(window.url + "api/getberatbadantinggiByDate/" + $formattedDate)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandinggizi = data;
+                    let giziburukL = 0, gizikurangL = 0, normalL = 0, bgizilebihL = 0, gizilebihL = 0, obesitasL = 0;
+                    let giziburukP = 0, giziKurangP = 0, normalP = 0, bgizilebihP = 0, gizilebihP = 0, obesitasP = 0;
+                    this.bandinggizi.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap:", item);
+                            return;
+                        }
+
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Gizi Buruk": giziburukL++;
+                                    this.modalgiziburuk.push(item); break;
+                                case "Gizi Kurang": gizikurangL++;
+                                    this.modalgizikurang.push(item); break;
+                                case "Gizi Baik": normalL++; break;
+                                case "Beresiko Gizi Lebih": bgizilebihL++;
+                                    this.modalresikogzlebih.push(item); break;
+                                case "Gizi Lebih": gizilebihL++;
+                                    this.modalgiziLebih.push(item); break;
+                                case "Obesitas": obesitasL++;
+                                    this.modalobesitas.push(item); break;
+                                default: console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Gizi Buruk": giziburukP++;
+                                    this.modalgiziburuk.push(item); break;
+                                case "Gizi Kurang": giziKurangP++;
+                                    this.modalgizikurang.push(item); break;
+                                case "Gizi Baik": normalP++; break;
+                                case "Beresiko Gizi Lebih": bgizilebihP++;
+                                    this.modalresikogzlebih.push(item); break;
+                                case "Gizi Lebih": gizilebihP++;
+                                    this.modalgiziLebih.push(item); break;
+                                case "Obesitas": obesitasP++;
+                                    this.modalobesitas.push(item); break;
+                                default: console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieBBTBLSeries = [giziburukL, gizikurangL, normalL, bgizilebihL, gizilebihL, obesitasL];
+                    this.pieBBTBPSeries = [giziburukP, giziKurangP, normalP, bgizilebihP, gizilebihP, obesitasP];
+
+                    if (!this.pieTBULSeries.some(value => value > 0)) {
+                        console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
+                    }
+
+                    if (!this.pieTBUPSeries.some(value => value > 0)) {
+                        console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
+                    }
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
         getGiziPos($id) {
             this.modalgiziburuk = [];
             this.modalgizikurang = [];
@@ -1220,6 +1542,78 @@ export default {
             this.modalobesitas = [];
             axios
                 .get(window.url + "api/getberatbadantinggiPos/" + $id)
+                .then((response) => {
+                    const data = response.data;
+                    if (!Array.isArray(data)) {
+                        console.error("Data yang diterima bukan array:", data);
+                        return;
+                    }
+                    this.bandinggizi = data;
+                    let giziburukL = 0, gizikurangL = 0, normalL = 0, bgizilebihL = 0, gizilebihL = 0, obesitasL = 0;
+                    let giziburukP = 0, giziKurangP = 0, normalP = 0, bgizilebihP = 0, gizilebihP = 0, obesitasP = 0;
+                    this.bandinggizi.forEach((item) => {
+                        if (!item.jenis_kelamin || !item.jenis) {
+                            console.warn("Data tidak lengkap:", item);
+                            return;
+                        }
+                        if (item.jenis_kelamin === "Laki-laki") {
+                            switch (item.jenis) {
+                                case "Gizi Buruk": giziburukL++;
+                                    this.modalgiziburuk.push(item); break;
+                                case "Gizi Kurang": gizikurangL++;
+                                    this.modalgizikurang.push(item); break;
+                                case "Gizi Baik": normalL++; break;
+                                case "Beresiko Gizi Lebih": bgizilebihL++;
+                                    this.modalresikogzlebih.push(item); break;
+                                case "Gizi Lebih": gizilebihL++;
+                                    this.modalgiziLebih.push(item); break;
+                                case "Obesitas": obesitasL++;
+                                    this.modalobesitas.push(item); break;
+                                default: console.log("Jenis tidak dikenali (Laki-laki):", item.jenis);
+                            }
+                        } else if (item.jenis_kelamin === "Perempuan") {
+                            switch (item.jenis) {
+                                case "Gizi Buruk": giziburukP++;
+                                    this.modalgiziburuk.push(item); break;
+                                case "Gizi Kurang": giziKurangP++;
+                                    this.modalgizikurang.push(item); break;
+                                case "Gizi Baik": normalP++; break;
+                                case "Beresiko Gizi Lebih": bgizilebihP++;
+                                    this.modalresikogzlebih.push(item); break;
+                                case "Gizi Lebih": gizilebihP++;
+                                    this.modalgiziLebih.push(item); break;
+                                case "Obesitas": obesitasP++;
+                                    this.modalobesitas.push(item); break;
+                                default: console.log("Jenis tidak dikenali (Perempuan):", item.jenis);
+                            }
+                        } else {
+                            console.warn("Jenis kelamin tidak dikenali:", item.jenis_kelamin);
+                        }
+                    });
+                    this.pieBBTBLSeries = [giziburukL, gizikurangL, normalL, bgizilebihL, gizilebihL, obesitasL];
+                    this.pieBBTBPSeries = [giziburukP, giziKurangP, normalP, bgizilebihP, gizilebihP, obesitasP];
+
+                    if (!this.pieTBULSeries.some(value => value > 0)) {
+                        console.error("Data series laki-laki kosong atau tidak valid:", this.pieTBULSeries);
+                    }
+
+                    if (!this.pieTBUPSeries.some(value => value > 0)) {
+                        console.error("Data series perempuan kosong atau tidak valid:", this.pieTBUPSeries);
+                    }
+                })
+                .catch((errors) => {
+                    console.error("Error saat mengambil data:", errors);
+                });
+        },
+        getGiziPosByDate($id, $date) {
+            this.modalgiziburuk = [];
+            this.modalgizikurang = [];
+            this.modalresikogzlebih = [];
+            this.modalgiziLebih = [];
+            this.modalobesitas = [];
+            const $formattedDate = this.formatDateForApi($date);
+            axios
+                .get(window.url + "api/getberatbadantinggiPosByDate/" + $id + "/" + $formattedDate)
                 .then((response) => {
                     const data = response.data;
                     if (!Array.isArray(data)) {
@@ -1297,20 +1691,39 @@ export default {
                 });
         },
         applyFilters() {
-            if (this.filters.posyandu_id) {
+            const posyanduId = this.filters.posyandu_id;
+            const tanggal = this.filters.tgl_kegiatan;
+            if (posyanduId && tanggal) {
+                this.getberatbadanumurPosByDate(posyanduId, tanggal);
+                this.gettinggibadanumurPosByDate(posyanduId, tanggal);
+                this.getGiziPosByDate(posyanduId, tanggal);
+            }
+            else if (posyanduId) {
                 const posyanduId = this.filters.posyandu_id;
                 this.getBayisPosyandu(posyanduId);
                 this.getberatbadanumurPos(posyanduId);
                 this.gettinggibadanumurPos(posyanduId);
                 this.getPeriksaPOS(posyanduId);
                 this.getGiziPos(posyanduId);
-            } else {
+            } else if (tanggal) {
+                this.getberatbadanumurByDate(tanggal);
+                this.gettinggibadanumurByDate(tanggal);
+                this.getGiziByDate(tanggal);
+            }
+            else {
                 this.getBayis();
                 this.getBeratBadanUmur();
                 this.gettinggibadanumur();
                 this.getPeriksa();
                 this.getGizi();
             }
+        },
+        resetDateFilter() {
+            this.filters.tgl_kegiatan = null;
+            this.applyFilters();
+        },
+        handleDateChange() {
+            this.applyFilters();
         },
 
         getBayis() {
@@ -1518,6 +1931,38 @@ export default {
                     $("#taskModal").modal("hide");
                 });
         },
+    },
+    mounted() {
+        this.getBayis();
+        this.getPosyandu();
+        this.kasihPosyandu();
+        this.getBeratBadanUmur();
+        this.gettinggibadanumur();
+        this.getPeriksa();
+        this.getGizi();
+        this.initializeSelect2();
+        window.navigateToDetail = (wusId) => {
+            this.$router.push({ path: `/detail-wus/${wusId}` });
+        };
+        const datepicker = this.$refs.datepicker; // Tambahkan ref="datepicker" di VueDatePicker
+        if (datepicker) {
+            datepicker.$on('clear', this.resetDateFilter);
+        }
+    },
+    watch: {
+        'filters.tgl_kegiatan': {
+            handler(newVal) {
+                this.handleDateChange();
+            }
+        }
+    },
+    beforeDestroy() {
+        if ($("#my-select").data("select2")) {
+            $("#my-select").select2("destroy");
+        }
+        if ($("#posyandu").data("select2")) {
+            $("#posyandu").select2("destroy");
+        }
     },
 };
 </script>

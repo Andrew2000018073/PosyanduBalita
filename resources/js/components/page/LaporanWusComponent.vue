@@ -665,9 +665,56 @@ export default {
                     console.log(errors);
                 });
         },
+        getStatusByDate($date) {
+            const $formattedDate = this.formatDateForApi($date);
+            axios
+                .get(window.url + "api/getWusStatusByDate/" + $formattedDate)
+                .then((response) => {
+                    this.status = response.data;
+                    const {
+                        tdmenikah,
+                        hamil,
+                        tdhamilsusu,
+                        tdhamilanggur,
+                        nifas,
+                    } = this.status;
+                    this.pieSeries = [
+                        tdmenikah,
+                        hamil,
+                        tdhamilsusu,
+                        tdhamilanggur,
+                        nifas,
+                    ];
+                })
+                .catch((errors) => {
+                    console.log(errors);
+                });
+        },
         getGemuk() {
             axios
                 .get(window.url + "api/getGemuk")
+                .then((response) => {
+                    this.bandinggemuk = response.data;
+                    let gemuk = 0;
+                    let normal = 0;
+
+                    this.bandinggemuk.forEach((item) => {
+                        if (item.lingkarperut_periksa <= 80) {
+                            normal += 1;
+                        } else if (item.lingkarperut_periksa > 80) {
+                            gemuk += 1;
+                        }
+                    });
+                    this.pieGemukSeries = [gemuk, normal];
+                })
+                .catch((errors) => {
+                    console.log(errors);
+                });
+        },
+        getGemukByDate($date) {
+            const $formattedDate = this.formatDateForApi($date);
+            axios
+                .get(window.url + "api/getGemukByDate/" + $formattedDate)
                 .then((response) => {
                     this.bandinggemuk = response.data;
                     let gemuk = 0;
@@ -807,6 +854,32 @@ export default {
                     console.log(errors);
                 });
         },
+        getKekByDate($date) {
+            const $formattedDate = this.formatDateForApi($date);
+            let tempModalKek = [];
+            axios
+                .get(window.url + "api/getKekByDate/" + $formattedDate)
+                .then((response) => {
+                    this.bandingkek = response.data;
+                    let kek = 0;
+                    let normal = 0;
+
+                    this.bandingkek.forEach((item) => {
+                        if (item.lila_periksa >= 23.5) {
+                            normal += 1;
+                        } else if (item.lila_periksa < 23.5) {
+                            kek += 1;
+                            tempModalKek.push(item);
+                        }
+                    });
+                    this.modalkek = tempModalKek;
+                    this.reinitializeDataModal(this.modalkek);
+                    this.pieKEKSeries = [kek, normal];
+                })
+                .catch((errors) => {
+                    console.log(errors);
+                });
+        },
         getKekPos($id) {
             let tempModalKek = [];
             axios
@@ -834,8 +907,9 @@ export default {
         },
         getKekPosByDate($id, $tanggal) {
             let tempModalKek = [];
+            const $formattedDate = this.formatDateForApi($tanggal);
             axios
-                .get(window.url + "api/getKekPos/" + $id)
+                .get(window.url + "api/getKekPosByDate/" + $id + "/" + $formattedDate)
                 .then((response) => {
                     this.bandingkek = response.data;
                     let kek = 0;
@@ -882,8 +956,9 @@ export default {
                 });
         },
         getStatusPosByDate($id, $tanggal) {
+            const $formattedDate = this.formatDateForApi($tanggal);
             axios
-                .get(window.url + "api/getWusStatusPos/" + $id)
+                .get(window.url + "api/getWusStatusPosByDate/" + $id + "/" + $formattedDate)
                 .then((response) => {
                     this.status = response.data;
                     const {
@@ -1014,6 +1089,11 @@ export default {
                 this.getKekPos(posyanduId);
                 this.getGemukPos(posyanduId);
                 this.getPeriksaPos(posyanduId);
+            } else if (tanggal) {
+                // Filter hanya berdasarkan tanggal
+                this.getStatusByDate(tanggal);
+                this.getKekByDate(tanggal);
+                this.getGemukByDate(tanggal);
             }
             else {
                 // Tidak ada filter
